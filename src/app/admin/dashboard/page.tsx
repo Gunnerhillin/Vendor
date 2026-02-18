@@ -1,24 +1,93 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { DollarSign, Store, Package, Clock, ArrowUpRight } from "lucide-react"
 import Link from "next/link"
+import { createClient } from "@/lib/supabase/client"
 
-const stats = [
-  { label: "Platform Revenue (MTD)", value: "$0", change: "No data yet", icon: DollarSign, color: "bg-accent" },
-  { label: "Active Vendors", value: "0", change: "No vendors yet", icon: Store, color: "bg-green-500" },
-  { label: "Total Orders (MTD)", value: "0", change: "No orders yet", icon: Package, color: "bg-purple-500" },
-  { label: "Pending Payouts", value: "$0", change: "No pending payouts", icon: Clock, color: "bg-amber-500" },
-]
-
-const pendingVendors: any[] = []
-
-const pendingProducts: any[] = []
-
-const topVendors: any[] = []
-
-const payoutQueue: any[] = []
-
-const revenueData: any[] = []
+interface VendorApp {
+  id: string
+  business_name: string
+  slug: string
+  description: string | null
+  status: string
+  applied_at: string
+  user_id: string
+}
 
 export default function AdminDashboard() {
+  const supabase = createClient()
+  const [pendingVendors, setPendingVendors] = useState<VendorApp[]>([])
+  const [allVendors, setAllVendors] = useState<VendorApp[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchData() {
+      const { data: vendors } = await supabase
+        .from("vendors")
+        .select("*")
+        .order("applied_at", { ascending: false })
+
+      if (vendors) {
+        setAllVendors(vendors)
+        setPendingVendors(vendors.filter((v: VendorApp) => v.status === "pending"))
+      }
+      setLoading(false)
+    }
+    fetchData()
+  }, [])
+
+  const handleApprove = async (vendorId: string) => {
+    const { error } = await supabase
+      .from("vendors")
+      .update({ status: "approved", approved_at: new Date().toISOString() })
+      .eq("id", vendorId)
+
+    if (!error) {
+      setPendingVendors(prev => prev.filter(v => v.id !== vendorId))
+      setAllVendors(prev => prev.map(v => v.id === vendorId ? { ...v, status: "approved" } : v))
+    }
+  }
+
+  const handleReject = async (vendorId: string) => {
+    const { error } = await supabase
+      .from("vendors")
+      .update({ status: "rejected" })
+      .eq("id", vendorId)
+
+    if (!error) {
+      setPendingVendors(prev => prev.filter(v => v.id !== vendorId))
+      setAllVendors(prev => prev.map(v => v.id === vendorId ? { ...v, status: "rejected" } : v))
+    }
+  }
+
+  const approvedCount = allVendors.filter(v => v.status === "approved").length
+
+  const stats = [
+    { label: "Platform Revenue (MTD)", value: "$0", change: "No data yet", icon: DollarSign, color: "bg-accent" },
+    { label: "Active Vendors", value: String(approvedCount), change: `${pendingVendors.length} pending`, icon: Store, color: "bg-green-500" },
+    { label: "Total Orders (MTD)", value: "0", change: "No orders yet", icon: Package, color: "bg-purple-500" },
+    { label: "Pending Payouts", value: "$0", change: "No pending payouts", icon: Clock, color: "bg-amber-500" },
+  ]
+
+  const pendingProducts: any[] = []
+  const payoutQueue: any[] = []
+  const revenueData: any[] = []
+
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime()
+    const mins = Math.floor(diff / 60000)
+    if (mins < 60) return `${mins}m ago`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    return `${days}d ago`
+  }
+
+  const getInitials = (name: string) => {
+    return name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 2)
+  }
+
   return (
     <div className="max-w-7xl">
       <h1 className="font-display text-2xl font-semibold mb-6">Admin Dashboard</h1>
@@ -52,7 +121,7 @@ export default function AdminDashboard() {
           </div>
         ) : (
           <div className="p-6 flex items-end gap-3 h-60">
-            {revenueData.map(({ month, height }) => (
+            {revenueData.map(({ month, height }: any) => (
               <div key={month} className="flex-1 flex flex-col items-center gap-2">
                 <div className="w-full rounded-t-md bg-gradient-to-t from-accent-light to-accent hover:opacity-80 transition-all" style={{ height: `${height}%` }} />
                 <span className="text-xs text-gray-400">{month}</span>
@@ -70,23 +139,37 @@ export default function AdminDashboard() {
             <h2 className="font-semibold">Vendor Applications ({pendingVendors.length})</h2>
             <Link href="/admin/vendors" className="text-xs font-medium text-accent-dark hover:underline">View All</Link>
           </div>
-          {pendingVendors.length === 0 ? (
+          {loading ? (
+            <div className="p-8 text-center text-gray-400">
+              <p>Loading...</p>
+            </div>
+          ) : pendingVendors.length === 0 ? (
             <div className="p-8 text-center text-gray-400">
               <p>No pending vendor applications</p>
             </div>
           ) : (
             pendingVendors.map((v) => (
-              <div key={v.name} className="flex items-center justify-between px-5 py-4 border-b border-warm-border last:border-0">
+              <div key={v.id} className="flex items-center justify-between px-5 py-4 border-b border-warm-border last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-warm-100 flex items-center justify-center text-xs font-bold">{v.initials}</div>
+                  <div className="w-10 h-10 rounded-full bg-warm-100 flex items-center justify-center text-xs font-bold">{getInitials(v.business_name)}</div>
                   <div>
-                    <h4 className="text-sm font-medium">{v.name}</h4>
-                    <p className="text-xs text-gray-400">{v.category} &bull; Applied {v.time}</p>
+                    <h4 className="text-sm font-medium">{v.business_name}</h4>
+                    <p className="text-xs text-gray-400">Applied {timeAgo(v.applied_at)}</p>
                   </div>
                 </div>
                 <div className="flex gap-2">
-                  <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-600 hover:text-white transition-all">Approve</button>
-                  <button className="px-3 py-1.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition-all">Reject</button>
+                  <button
+                    onClick={() => handleApprove(v.id)}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-600 hover:text-white transition-all"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => handleReject(v.id)}
+                    className="px-3 py-1.5 rounded-full text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition-all"
+                  >
+                    Reject
+                  </button>
                 </div>
               </div>
             ))
@@ -104,7 +187,7 @@ export default function AdminDashboard() {
               <p>No products pending review</p>
             </div>
           ) : (
-            pendingProducts.map((p) => (
+            pendingProducts.map((p: any) => (
               <div key={p.title} className="flex items-center justify-between px-5 py-4 border-b border-warm-border last:border-0">
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">{p.emoji}</span>
@@ -128,21 +211,21 @@ export default function AdminDashboard() {
             <h2 className="font-semibold">Top Vendors</h2>
             <Link href="/admin/vendors" className="text-xs font-medium text-accent-dark hover:underline">Manage All</Link>
           </div>
-          {topVendors.length === 0 ? (
+          {allVendors.filter(v => v.status === "approved").length === 0 ? (
             <div className="p-8 text-center text-gray-400">
               <p>No vendors yet</p>
             </div>
           ) : (
-            topVendors.map((v) => (
-              <div key={v.name} className="flex items-center justify-between px-5 py-4 border-b border-warm-border last:border-0">
+            allVendors.filter(v => v.status === "approved").slice(0, 5).map((v) => (
+              <div key={v.id} className="flex items-center justify-between px-5 py-4 border-b border-warm-border last:border-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-warm-100 flex items-center justify-center text-xs font-bold">{v.initials}</div>
+                  <div className="w-10 h-10 rounded-full bg-warm-100 flex items-center justify-center text-xs font-bold">{getInitials(v.business_name)}</div>
                   <div>
-                    <h4 className="text-sm font-medium">{v.name}</h4>
-                    <p className="text-xs text-gray-400">{v.revenue} revenue &bull; {v.orders} orders</p>
+                    <h4 className="text-sm font-medium">{v.business_name}</h4>
+                    <p className="text-xs text-gray-400">$0 revenue &bull; 0 orders</p>
                   </div>
                 </div>
-                <span className={`badge ${v.status === "active" ? "badge-success" : "badge-danger"}`}>{v.status}</span>
+                <span className="badge badge-success">approved</span>
               </div>
             ))
           )}
@@ -159,7 +242,7 @@ export default function AdminDashboard() {
               <p>No pending payouts</p>
             </div>
           ) : (
-            payoutQueue.map((p) => (
+            payoutQueue.map((p: any) => (
               <div key={p.name} className="flex items-center justify-between px-5 py-4 border-b border-warm-border last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-warm-100 flex items-center justify-center text-xs font-bold">{p.initials}</div>
