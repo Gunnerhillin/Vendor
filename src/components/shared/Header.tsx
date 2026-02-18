@@ -38,14 +38,31 @@ export default function Header() {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (session?.user) {
-          const { data: profile } = await supabase
+          // Race the profile query against a 3s timeout so it never hangs
+          const profilePromise = supabase
             .from('profiles')
             .select('*')
             .eq('id', session.user.id)
             .single()
-          if (profile) {
-            setUser(profile as Profile)
-            setAvatarUrl(profile.avatar_url)
+          const timeoutPromise = new Promise((resolve) =>
+            setTimeout(() => resolve({ data: null, error: 'timeout' }), 3000)
+          )
+          const result: any = await Promise.race([profilePromise, timeoutPromise])
+
+          if (result?.data) {
+            setUser(result.data as Profile)
+            setAvatarUrl(result.data.avatar_url)
+          } else {
+            // Profile query failed or timed out — show basic info from session
+            setUser({
+              id: session.user.id,
+              email: session.user.email || '',
+              full_name: session.user.user_metadata?.full_name || session.user.email || '',
+              avatar_url: null,
+              role: 'customer',
+              created_at: '',
+              updated_at: '',
+            } as Profile)
           }
         } else {
           setUser(null)

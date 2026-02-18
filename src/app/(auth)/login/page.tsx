@@ -11,19 +11,16 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
-  const [status, setStatus] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
-    setStatus("Connecting...")
 
     try {
       const supabase = createClient()
 
-      setStatus("Authenticating...")
-      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+      const { error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
       })
@@ -31,45 +28,15 @@ export default function LoginPage() {
       if (signInError) {
         setError(signInError.message)
         setLoading(false)
-        setStatus("")
         return
       }
 
-      const userId = data.session?.user?.id || data.user?.id
-
-      if (!userId) {
-        setError("Sign in failed — no user returned.")
-        setLoading(false)
-        setStatus("")
-        return
-      }
-
-      setStatus("Loading profile...")
-      const { data: profile, error: profileError } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", userId)
-        .single()
-
-      if (profileError) {
-        // Profile query failed but user IS authenticated — just redirect home
-        setStatus("Redirecting...")
-        window.location.href = "/"
-        return
-      }
-
-      setStatus("Redirecting...")
-      if (profile?.role === "admin") {
-        window.location.href = "/admin/dashboard"
-      } else if (profile?.role === "vendor") {
-        window.location.href = "/vendor/dashboard"
-      } else {
-        window.location.href = "/"
-      }
+      // Auth succeeded — just redirect home. The Header will detect the
+      // session via onAuthStateChange and show the profile/role links.
+      window.location.href = "/"
     } catch (err: any) {
       setError(err?.message || "An unexpected error occurred.")
       setLoading(false)
-      setStatus("")
     }
   }
 
@@ -103,7 +70,7 @@ export default function LoginPage() {
           </div>
         </div>
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? status || "Signing in..." : "Sign In"}
+          {loading ? "Signing in..." : "Sign In"}
         </button>
       </form>
 
