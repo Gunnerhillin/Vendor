@@ -1,0 +1,137 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+@layer base {
+  :root {
+    --background: 0 0% 99%;
+    --foreground: 20 10% 15%;
+    --muted: 30 15% 94%;
+    --muted-foreground: 20 6% 40%;
+    --accent: 28 42% 60%;
+    --accent-foreground: 0 0% 100%;
+    --border: 30 15% 90%;
+    --ring: 28 42% 60%;
+    --radius: 0.75rem;
+  }
+
+  * {
+    @apply border-warm-border;
+  }
+
+  body {
+    @apply bg-warm-bg text-primary font-sans antialiased;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-primary text-white px-8 py-3 text-sm font-semibold transition-all hover:bg-accent-dark hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0 disabled:opacity-50 disabled:pointer-events-none;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border-2 border-warm-border bg-white text-primary px-8 py-3 text-sm font-semibold transition-all hover:border-accent hover:text-accent-dark;
+  }
+
+  .btn-accent {
+    @apply inline-flex items-center justify-center gap-2 rounded-full bg-accent text-white px-8 py-3 text-sm font-semibold transition-all hover:bg-accent-dark hover:-translate-y-0.5 hover:shadow-lg;
+  }
+
+  .btn-sm {
+    @apply px-5 py-2 text-xs;
+  }
+
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 rounded-lg bg-transparent text-primary px-4 py-2 text-sm font-medium transition-all hover:bg-warm-100;
+  }
+
+  .card {
+    @apply bg-white rounded-xl border border-warm-border transition-all;
+  }
+
+  .card-hover {
+    @apply card hover:-translate-y-1.5 hover:shadow-xl hover:border-transparent cursor-pointer;
+  }
+
+  .input {
+    @apply w-full px-4 py-3 rounded-lg border border-warm-border bg-white text-sm font-sans outline-none transition-all focus:border-accent focus:ring-2 focus:ring-accent/20;
+  }
+
+  .label {
+    @apply block text-xs font-semibold uppercase tracking-wider text-gray-500 mb-2;
+  }
+
+  .badge {
+    @apply inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold;
+  }
+
+  .badge-success {
+    @apply badge bg-green-50 text-green-700;
+  }
+
+  .badge-warning {
+    @apply badge bg-yellow-50 text-yellow-600;
+  }
+
+  .badge-danger {
+    @apply badge bg-red-50 text-red-600;
+  }
+
+  .badge-info {
+    @apply badge bg-blue-50 text-blue-600;
+  }
+
+  .section-title {
+    @apply font-display text-2xl md:text-3xl font-semibold;
+  }
+
+  .page-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1ccc7;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #b5aeaa;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideDown {
+  from { opacity: 0; transform: translateY(-10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
+.animate-slide-up {
+  animation: slideUp 0.5s ease-out forwards;
+}
+
+.animate-slide-down {
+  animation: slideDown 0.3s ease-out forwards;
+}
