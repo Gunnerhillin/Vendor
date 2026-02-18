@@ -1,13 +1,6 @@
 import { DollarSign, TrendingUp, Users, ShoppingCart, Download } from "lucide-react"
 
-const monthlyData = [
-  { month: "Sep 2025", orders: 412, gmv: "$18,240", commission: "$2,736", vendors: 89 },
-  { month: "Oct 2025", orders: 520, gmv: "$24,800", commission: "$3,720", vendors: 96 },
-  { month: "Nov 2025", orders: 680, gmv: "$31,200", commission: "$4,680", vendors: 104 },
-  { month: "Dec 2025", orders: 890, gmv: "$42,600", commission: "$6,390", vendors: 112 },
-  { month: "Jan 2026", orders: 780, gmv: "$38,400", commission: "$5,760", vendors: 119 },
-  { month: "Feb 2026", orders: 920, gmv: "$48,920", commission: "$7,338", vendors: 127 },
-]
+const monthlyData: any[] = []
 
 export default function AdminRevenuePage() {
   const currentMonth = monthlyData[monthlyData.length - 1]
@@ -24,23 +17,23 @@ export default function AdminRevenuePage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <div className="card p-6">
           <div className="text-sm text-gray-500 mb-1 flex items-center gap-1"><DollarSign size={14} /> Gross Merchandise Value</div>
-          <p className="text-2xl font-bold">{currentMonth.gmv}</p>
-          <p className="text-xs text-green-600 font-semibold mt-1">Feb 2026</p>
+          <p className="text-2xl font-bold">$0</p>
+          <p className="text-xs text-gray-400 font-semibold mt-1">No data yet</p>
         </div>
         <div className="card p-6">
           <div className="text-sm text-gray-500 mb-1 flex items-center gap-1"><TrendingUp size={14} /> Platform Commission</div>
-          <p className="text-2xl font-bold">{currentMonth.commission}</p>
-          <p className="text-xs text-green-600 font-semibold mt-1">15% avg rate</p>
+          <p className="text-2xl font-bold">$0</p>
+          <p className="text-xs text-gray-400 font-semibold mt-1">15% avg rate</p>
         </div>
         <div className="card p-6">
           <div className="text-sm text-gray-500 mb-1 flex items-center gap-1"><ShoppingCart size={14} /> Total Orders</div>
-          <p className="text-2xl font-bold">{currentMonth.orders.toLocaleString()}</p>
-          <p className="text-xs text-green-600 font-semibold mt-1">+18% MoM</p>
+          <p className="text-2xl font-bold">0</p>
+          <p className="text-xs text-gray-400 font-semibold mt-1">No orders yet</p>
         </div>
         <div className="card p-6">
           <div className="text-sm text-gray-500 mb-1 flex items-center gap-1"><Users size={14} /> Active Vendors</div>
-          <p className="text-2xl font-bold">{currentMonth.vendors}</p>
-          <p className="text-xs text-green-600 font-semibold mt-1">+8 new</p>
+          <p className="text-2xl font-bold">0</p>
+          <p className="text-xs text-gray-400 font-semibold mt-1">No vendors yet</p>
         </div>
       </div>
 
@@ -48,30 +41,36 @@ export default function AdminRevenuePage() {
         <div className="flex items-center justify-between p-6 border-b border-warm-border">
           <h2 className="font-semibold">Monthly Breakdown</h2>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-warm-100">
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Month</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Orders</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">GMV</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Commission</th>
-                <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Active Vendors</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...monthlyData].reverse().map((m) => (
-                <tr key={m.month} className="border-b border-warm-border last:border-0">
-                  <td className="px-6 py-4 text-sm font-medium">{m.month}</td>
-                  <td className="px-6 py-4 text-sm">{m.orders.toLocaleString()}</td>
-                  <td className="px-6 py-4 text-sm font-medium">{m.gmv}</td>
-                  <td className="px-6 py-4 text-sm font-bold text-accent-dark">{m.commission}</td>
-                  <td className="px-6 py-4 text-sm">{m.vendors}</td>
+        {monthlyData.length === 0 ? (
+          <div className="p-12 text-center text-gray-400">
+            <p>No revenue data yet</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-warm-100">
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Month</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Orders</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">GMV</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Commission</th>
+                  <th className="text-left px-6 py-3 text-xs font-semibold text-gray-500 uppercase">Active Vendors</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {[...monthlyData].reverse().map((m) => (
+                  <tr key={m.month} className="border-b border-warm-border last:border-0">
+                    <td className="px-6 py-4 text-sm font-medium">{m.month}</td>
+                    <td className="px-6 py-4 text-sm">{m.orders.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-sm font-medium">{m.gmv}</td>
+                    <td className="px-6 py-4 text-sm font-bold text-accent-dark">{m.commission}</td>
+                    <td className="px-6 py-4 text-sm">{m.vendors}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

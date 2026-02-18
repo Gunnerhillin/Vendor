@@ -12,64 +12,7 @@ import Link from 'next/link'
 import type { Product } from '@/types'
 
 // Demo products for initial build — will be replaced with Supabase queries
-const demoProducts: Product[] = [
-  {
-    id: '1', vendor_id: 'v1', category_id: 'c1', title: 'Floral Midi Wrap Dress — Summer Collection',
-    slug: 'floral-midi-wrap-dress', description: '', price: 29.99, compare_at_price: 74.99,
-    status: 'approved', inventory_count: 22, sold_count: 1200, is_preorder: false, drop_date: null,
-    images: [], variants: [], rating_avg: 4.8, rating_count: 128, created_at: '', updated_at: '',
-    vendor: { id: 'v1', user_id: '', business_name: 'Luxe Thread Co.', slug: 'luxe-thread', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-  {
-    id: '2', vendor_id: 'v2', category_id: 'c7', title: 'Vitamin C Brightening Serum — 1oz',
-    slug: 'vitamin-c-serum', description: '', price: 18.50, compare_at_price: 42.00,
-    status: 'approved', inventory_count: 120, sold_count: 800, is_preorder: false, drop_date: null,
-    images: [], variants: [], rating_avg: 4.3, rating_count: 87, created_at: '', updated_at: '',
-    vendor: { id: 'v2', user_id: '', business_name: 'Glow Naturals', slug: 'glow-naturals', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-  {
-    id: '3', vendor_id: 'v3', category_id: 'c3', title: 'Hand-Poured Soy Candle Set — Cozy Collection (3-Pack)',
-    slug: 'soy-candle-set', description: '', price: 24.99, compare_at_price: 54.00,
-    status: 'approved', inventory_count: 35, sold_count: 600, is_preorder: false, drop_date: null,
-    images: [], variants: [], rating_avg: 4.9, rating_count: 215, created_at: '', updated_at: '',
-    vendor: { id: 'v3', user_id: '', business_name: 'Haven Home', slug: 'haven-home', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-  {
-    id: '4', vendor_id: 'v4', category_id: 'c6', title: "Men's Premium Henley — Relaxed Fit",
-    slug: 'mens-premium-henley', description: '', price: 22.00, compare_at_price: 48.00,
-    status: 'approved', inventory_count: 80, sold_count: 320, is_preorder: true, drop_date: '2026-03-15',
-    images: [], variants: [], rating_avg: 4.7, rating_count: 64, created_at: '', updated_at: '',
-    vendor: { id: 'v4', user_id: '', business_name: 'Oak & Stone Apparel', slug: 'oak-stone', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-  {
-    id: '5', vendor_id: 'v5', category_id: 'c4', title: 'Crossbody Leather Bag — Saddle Tan',
-    slug: 'crossbody-leather-bag', description: '', price: 34.99, compare_at_price: 64.00,
-    status: 'approved', inventory_count: 55, sold_count: 410, is_preorder: false, drop_date: null,
-    images: [], variants: [], rating_avg: 4.8, rating_count: 91, created_at: '', updated_at: '',
-    vendor: { id: 'v5', user_id: '', business_name: 'Aria Boutique', slug: 'aria-boutique', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-  {
-    id: '6', vendor_id: 'v6', category_id: 'c2', title: 'Organic Cotton Romper Set — Sage',
-    slug: 'organic-cotton-romper', description: '', price: 19.99, compare_at_price: 38.00,
-    status: 'approved', inventory_count: 90, sold_count: 2100, is_preorder: false, drop_date: null,
-    images: [], variants: [], rating_avg: 4.9, rating_count: 156, created_at: '', updated_at: '',
-    vendor: { id: 'v6', user_id: '', business_name: 'Little Bloom Kids', slug: 'little-bloom', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-  {
-    id: '7', vendor_id: 'v2', category_id: 'c7', title: 'Clean Beauty Bundle — 5 Piece Starter Kit',
-    slug: 'clean-beauty-bundle', description: '', price: 39.99, compare_at_price: 89.00,
-    status: 'approved', inventory_count: 18, sold_count: 300, is_preorder: false, drop_date: null,
-    images: [], variants: [], rating_avg: 4.2, rating_count: 73, created_at: '', updated_at: '',
-    vendor: { id: 'v2', user_id: '', business_name: 'Glow Naturals', slug: 'glow-naturals', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-  {
-    id: '8', vendor_id: 'v7', category_id: 'c5', title: 'Resistance Band Set + Yoga Mat Bundle',
-    slug: 'resistance-band-yoga-mat', description: '', price: 27.50, compare_at_price: 55.00,
-    status: 'approved', inventory_count: 65, sold_count: 580, is_preorder: false, drop_date: null,
-    images: [], variants: [], rating_avg: 4.9, rating_count: 202, created_at: '', updated_at: '',
-    vendor: { id: 'v7', user_id: '', business_name: 'Zenith Wellness', slug: 'zenith-wellness', description: null, logo_url: null, banner_url: null, status: 'approved', commission_rate: 0.15, stripe_account_id: null, stripe_onboarding_complete: false, applied_at: '', approved_at: null, total_sales: 0, total_revenue: 0, product_count: 0 },
-  },
-]
+const demoProducts: Product[] = []
 
 export default function HomePage() {
   const trending = demoProducts.slice(0, 4)
@@ -118,11 +61,17 @@ export default function HomePage() {
               See All &rarr;
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {trending.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          {trending.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400">No deals available yet — check back soon!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {trending.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Vendor Spotlight */}
@@ -141,11 +90,17 @@ export default function HomePage() {
               See All &rarr;
             </Link>
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-            {moreDeals.map((p) => (
-              <ProductCard key={p.id} product={p} />
-            ))}
-          </div>
+          {moreDeals.length === 0 ? (
+            <div className="text-center py-12">
+              <p className="text-gray-400">No deals available yet — check back soon!</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
+              {moreDeals.map((p) => (
+                <ProductCard key={p.id} product={p} />
+              ))}
+            </div>
+          )}
         </section>
 
         {/* Vendor CTA */}
