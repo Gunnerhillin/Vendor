@@ -11,15 +11,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [status, setStatus] = useState("")
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setStatus("Connecting...")
 
     try {
       const supabase = createClient()
 
+      setStatus("Authenticating...")
       const { data, error: signInError } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -28,33 +31,45 @@ export default function LoginPage() {
       if (signInError) {
         setError(signInError.message)
         setLoading(false)
+        setStatus("")
         return
       }
 
-      if (data.session) {
-        // Check role and redirect accordingly
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("role")
-          .eq("id", data.session.user.id)
-          .single()
+      const userId = data.session?.user?.id || data.user?.id
 
-        // Use window.location for full page reload so middleware picks up auth cookies
-        if (profile?.role === "admin") {
-          window.location.href = "/admin/dashboard"
-        } else if (profile?.role === "vendor") {
-          window.location.href = "/vendor/dashboard"
-        } else {
-          window.location.href = "/"
-        }
+      if (!userId) {
+        setError("Sign in failed — no user returned.")
+        setLoading(false)
+        setStatus("")
         return
       }
 
-      setError("Sign in failed — no session returned. Please try again.")
+      setStatus("Loading profile...")
+      const { data: profile, error: profileError } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", userId)
+        .single()
+
+      if (profileError) {
+        // Profile query failed but user IS authenticated — just redirect home
+        setStatus("Redirecting...")
+        window.location.href = "/"
+        return
+      }
+
+      setStatus("Redirecting...")
+      if (profile?.role === "admin") {
+        window.location.href = "/admin/dashboard"
+      } else if (profile?.role === "vendor") {
+        window.location.href = "/vendor/dashboard"
+      } else {
+        window.location.href = "/"
+      }
+    } catch (err: any) {
+      setError(err?.message || "An unexpected error occurred.")
       setLoading(false)
-    } catch (err) {
-      setError("An unexpected error occurred. Please try again.")
-      setLoading(false)
+      setStatus("")
     }
   }
 
@@ -88,7 +103,7 @@ export default function LoginPage() {
           </div>
         </div>
         <button type="submit" disabled={loading} className="btn-primary w-full">
-          {loading ? "Signing in..." : "Sign In"}
+          {loading ? status || "Signing in..." : "Sign In"}
         </button>
       </form>
 
