@@ -1,3 +1,5 @@
+'use client'
+
 import { Search } from 'lucide-react'
 import ProductCard from '@/components/storefront/ProductCard'
 import type { Product } from '@/types'

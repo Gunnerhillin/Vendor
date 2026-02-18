@@ -1,3 +1,5 @@
+'use client'
+
 import DealTimer from '@/components/storefront/DealTimer'
 import CategoryGrid from '@/components/storefront/CategoryGrid'
 import ProductCard from '@/components/storefront/ProductCard'
