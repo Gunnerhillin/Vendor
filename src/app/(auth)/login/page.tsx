@@ -1,13 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Mail, Lock, Eye, EyeOff } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function LoginPage() {
-  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
@@ -19,39 +17,45 @@ export default function LoginPage() {
     setLoading(true)
     setError("")
 
-    const supabase = createClient()
+    try {
+      const supabase = createClient()
 
-    const { data, error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    })
+      const { data, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      })
 
-    if (signInError) {
-      setError(signInError.message)
-      setLoading(false)
-      return
-    }
-
-    if (data.user) {
-      // Check role and redirect accordingly
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", data.user.id)
-        .single()
-
-      // Use window.location for full page reload so middleware picks up auth cookies
-      if (profile?.role === "admin") {
-        window.location.href = "/admin/dashboard"
-      } else if (profile?.role === "vendor") {
-        window.location.href = "/vendor/dashboard"
-      } else {
-        window.location.href = "/"
+      if (signInError) {
+        setError(signInError.message)
+        setLoading(false)
+        return
       }
-      return
-    }
 
-    setLoading(false)
+      if (data.session) {
+        // Check role and redirect accordingly
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", data.session.user.id)
+          .single()
+
+        // Use window.location for full page reload so middleware picks up auth cookies
+        if (profile?.role === "admin") {
+          window.location.href = "/admin/dashboard"
+        } else if (profile?.role === "vendor") {
+          window.location.href = "/vendor/dashboard"
+        } else {
+          window.location.href = "/"
+        }
+        return
+      }
+
+      setError("Sign in failed — no session returned. Please try again.")
+      setLoading(false)
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.")
+      setLoading(false)
+    }
   }
 
   return (

@@ -4,7 +4,6 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Search, ShoppingBag, Heart, User, Menu, X, ChevronDown, LogOut, Settings, Package, Shield } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
-import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/use-cart'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types'
@@ -22,7 +21,6 @@ const categories = [
 ]
 
 export default function Header() {
-  const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
@@ -34,22 +32,31 @@ export default function Header() {
   const toggleCart = useCart((s) => s.toggleCart)
 
   useEffect(() => {
-    const fetchUser = async () => {
-      const supabase = createClient()
-      const { data: { user: authUser } } = await supabase.auth.getUser()
-      if (authUser) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', authUser.id)
-          .single()
-        if (profile) {
-          setUser(profile as Profile)
-          setAvatarUrl(profile.avatar_url)
+    const supabase = createClient()
+
+    // Use onAuthStateChange for reliable session detection
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .single()
+          if (profile) {
+            setUser(profile as Profile)
+            setAvatarUrl(profile.avatar_url)
+          }
+        } else {
+          setUser(null)
+          setAvatarUrl(null)
         }
       }
+    )
+
+    return () => {
+      subscription.unsubscribe()
     }
-    fetchUser()
   }, [])
 
   // Close dropdown on outside click
@@ -68,8 +75,7 @@ export default function Header() {
     await supabase.auth.signOut()
     setUser(null)
     setProfileOpen(false)
-    router.push('/')
-    router.refresh()
+    window.location.href = '/'
   }
 
   return (
