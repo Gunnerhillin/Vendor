@@ -17,14 +17,21 @@ const config: Config = {
         },
         warm: {
           bg: '#FDFBF9',
+          50: '#FDFBF9',
           100: '#F7F2ED',
           200: '#EDE4DA',
+          300: '#E8E2DC',
+          400: '#C4BAAF',
+          500: '#9E9189',
           border: '#E8E2DC',
         },
       },
       fontFamily: {
         display: ['Playfair Display', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      boxShadow: {
+        soft: '0 2px 15px -3px rgba(0, 0, 0, 0.07), 0 10px 20px -2px rgba(0, 0, 0, 0.04)',
       },
     },
   },
