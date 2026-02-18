@@ -32,7 +32,6 @@ export default function Footer() {
             <nav className="space-y-2">
               <Link href="/vendor/apply" className="block text-sm hover:text-accent-light transition-colors">Apply to Sell</Link>
               <Link href="#" className="block text-sm hover:text-accent-light transition-colors">Vendor Resources</Link>
-              <Link href="#" className="block text-sm hover:text-accent-light transition-colors">Commission Info</Link>
               <Link href="#" className="block text-sm hover:text-accent-light transition-colors">Success Stories</Link>
             </nav>
           </div>
