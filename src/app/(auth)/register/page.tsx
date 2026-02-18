@@ -48,7 +48,8 @@ export default function RegisterPage() {
       })
 
       if (data.session) {
-        router.push("/")
+        window.location.href = "/"
+        return
       } else {
         setSuccess("Check your email for a confirmation link to complete your registration.")
       }

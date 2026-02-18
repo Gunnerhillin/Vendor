@@ -40,13 +40,15 @@ export default function LoginPage() {
         .eq("id", data.user.id)
         .single()
 
+      // Use window.location for full page reload so middleware picks up auth cookies
       if (profile?.role === "admin") {
-        router.push("/admin/dashboard")
+        window.location.href = "/admin/dashboard"
       } else if (profile?.role === "vendor") {
-        router.push("/vendor/dashboard")
+        window.location.href = "/vendor/dashboard"
       } else {
-        router.push("/")
+        window.location.href = "/"
       }
+      return
     }
 
     setLoading(false)
