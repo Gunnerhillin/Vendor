@@ -42,8 +42,8 @@ export default function Footer() {
             <nav className="space-y-2">
               <Link href="#" className="block text-sm hover:text-accent-light transition-colors">About</Link>
               <Link href="#" className="block text-sm hover:text-accent-light transition-colors">Contact</Link>
-              <Link href="#" className="block text-sm hover:text-accent-light transition-colors">Privacy Policy</Link>
-              <Link href="#" className="block text-sm hover:text-accent-light transition-colors">Terms of Service</Link>
+              <Link href="/privacy" className="block text-sm hover:text-accent-light transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="block text-sm hover:text-accent-light transition-colors">Terms of Service</Link>
             </nav>
           </div>
         </div>
