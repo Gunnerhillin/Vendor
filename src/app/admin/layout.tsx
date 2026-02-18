@@ -1,8 +1,11 @@
 "use client"
 
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Store, Package, ShoppingCart, DollarSign, BarChart3, Settings, Users } from "lucide-react"
+import { LayoutDashboard, Store, Package, ShoppingCart, DollarSign, BarChart3, Users, LogOut } from "lucide-react"
+import { createClient } from "@/lib/supabase/client"
 
 const links = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -11,10 +14,63 @@ const links = [
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/payouts", label: "Payouts", icon: DollarSign },
   { href: "/admin/revenue", label: "Revenue", icon: BarChart3 },
+  { href: "/admin/users", label: "Users & Roles", icon: Users },
 ]
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
+  const router = useRouter()
+  const [authorized, setAuthorized] = useState(false)
+  const [loading, setLoading] = useState(true)
+  const [adminName, setAdminName] = useState("")
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const supabase = createClient()
+      const { data: { user } } = await supabase.auth.getUser()
+
+      if (!user) {
+        router.push("/login")
+        return
+      }
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("role, full_name")
+        .eq("id", user.id)
+        .single()
+
+      if (profile?.role !== "admin") {
+        router.push("/")
+        return
+      }
+
+      setAdminName(profile.full_name || "Admin")
+      setAuthorized(true)
+      setLoading(false)
+    }
+
+    checkAdmin()
+  }, [router])
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push("/login")
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-warm-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+          <p className="text-gray-500 text-sm">Verifying admin access...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!authorized) return null
 
   return (
     <div className="min-h-screen bg-warm-100">
@@ -28,7 +84,12 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </div>
         <div className="flex items-center gap-4">
           <Link href="/" className="text-sm text-white/60 hover:text-white transition-colors">View Site</Link>
-          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-bold">A</div>
+          <button onClick={handleLogout} className="text-sm text-white/60 hover:text-white transition-colors flex items-center gap-1">
+            <LogOut size={14} /> Sign Out
+          </button>
+          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-xs font-bold">
+            {adminName.charAt(0).toUpperCase()}
+          </div>
         </div>
       </div>
 
