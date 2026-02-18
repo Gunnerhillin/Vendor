@@ -1,9 +1,13 @@
 'use client'
 
 import Link from 'next/link'
-import { Search, ShoppingBag, Heart, User, Menu, X } from 'lucide-react'
-import { useState } from 'react'
+import Image from 'next/image'
+import { Search, ShoppingBag, Heart, User, Menu, X, ChevronDown, LogOut, Settings, Package, Shield } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/use-cart'
+import { createClient } from '@/lib/supabase/client'
+import type { Profile } from '@/types'
 
 const categories = [
   { name: "Today's Deals", href: '/' },
@@ -18,11 +22,55 @@ const categories = [
 ]
 
 export default function Header() {
+  const router = useRouter()
   const [searchOpen, setSearchOpen] = useState(false)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [profileOpen, setProfileOpen] = useState(false)
+  const [user, setUser] = useState<Profile | null>(null)
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null)
+  const dropdownRef = useRef<HTMLDivElement>(null)
   const itemCount = useCart((s) => s.itemCount())
   const toggleCart = useCart((s) => s.toggleCart)
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const supabase = createClient()
+      const { data: { user: authUser } } = await supabase.auth.getUser()
+      if (authUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', authUser.id)
+          .single()
+        if (profile) {
+          setUser(profile as Profile)
+          setAvatarUrl(profile.avatar_url)
+        }
+      }
+    }
+    fetchUser()
+  }, [])
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setProfileOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const handleLogout = async () => {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    setUser(null)
+    setProfileOpen(false)
+    router.push('/')
+    router.refresh()
+  }
 
   return (
     <>
@@ -33,7 +81,7 @@ export default function Header() {
 
       {/* Main Header */}
       <header className="bg-white border-b border-warm-border sticky top-0 z-50">
-        <div className="page-container flex items-center justify-between h-16 md:h-[72px]">
+        <div className="section-padding flex items-center justify-between h-16 md:h-[72px]">
           {/* Mobile Menu Toggle */}
           <button
             className="md:hidden p-2 -ml-2"
@@ -77,10 +125,102 @@ export default function Header() {
               Sell on Vender
             </Link>
 
-            <Link href="/login" className="hidden md:flex items-center gap-1.5 text-sm font-medium hover:text-accent transition-colors">
-              <User size={18} />
-              <span>Sign In</span>
-            </Link>
+            {/* User / Profile */}
+            {user ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  onClick={() => setProfileOpen(!profileOpen)}
+                  className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+                >
+                  {avatarUrl ? (
+                    <Image
+                      src={avatarUrl}
+                      alt={user.full_name}
+                      width={32}
+                      height={32}
+                      className="w-8 h-8 rounded-full object-cover border-2 border-accent"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white text-xs font-bold">
+                      {(user.full_name || user.email).charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="hidden md:block text-sm font-medium max-w-[100px] truncate">
+                    {user.full_name?.split(' ')[0] || 'Account'}
+                  </span>
+                  <ChevronDown size={14} className="hidden md:block text-gray-400" />
+                </button>
+
+                {/* Dropdown */}
+                {profileOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-warm-300 overflow-hidden z-50">
+                    {/* User info */}
+                    <div className="px-4 py-3 border-b border-warm-300 bg-warm-100">
+                      <p className="text-sm font-semibold text-primary truncate">{user.full_name}</p>
+                      <p className="text-xs text-gray-500 truncate">{user.email}</p>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                        href="/account"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-warm-100 transition-colors"
+                      >
+                        <User size={16} /> My Account
+                      </Link>
+                      <Link
+                        href="/account/orders"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-warm-100 transition-colors"
+                      >
+                        <Package size={16} /> My Orders
+                      </Link>
+                      <Link
+                        href="/account/settings"
+                        onClick={() => setProfileOpen(false)}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-warm-100 transition-colors"
+                      >
+                        <Settings size={16} /> Settings
+                      </Link>
+
+                      {user.role === 'admin' && (
+                        <Link
+                          href="/admin/dashboard"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-purple-700 hover:bg-purple-50 transition-colors"
+                        >
+                          <Shield size={16} /> Admin Panel
+                        </Link>
+                      )}
+
+                      {user.role === 'vendor' && (
+                        <Link
+                          href="/vendor/dashboard"
+                          onClick={() => setProfileOpen(false)}
+                          className="flex items-center gap-3 px-4 py-2.5 text-sm text-blue-700 hover:bg-blue-50 transition-colors"
+                        >
+                          <Package size={16} /> Vendor Dashboard
+                        </Link>
+                      )}
+                    </div>
+
+                    <div className="border-t border-warm-300 py-1">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors w-full"
+                      >
+                        <LogOut size={16} /> Sign Out
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login" className="hidden md:flex items-center gap-1.5 text-sm font-medium hover:text-accent transition-colors">
+                <User size={18} />
+                <span>Sign In</span>
+              </Link>
+            )}
 
             <Link href="/wishlist" className="p-2 hover:text-accent transition-colors hidden md:block">
               <Heart size={22} />
@@ -99,7 +239,7 @@ export default function Header() {
 
         {/* Mobile Search */}
         {searchOpen && (
-          <div className="md:hidden px-4 pb-3 animate-slide-down">
+          <div className="md:hidden px-4 pb-3">
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
               <input
@@ -121,7 +261,7 @@ export default function Header() {
 
       {/* Category Nav */}
       <nav className="bg-white border-b border-warm-border overflow-x-auto scrollbar-hide">
-        <div className="page-container flex items-center gap-0">
+        <div className="section-padding flex items-center gap-0">
           {categories.map((cat) => (
             <Link
               key={cat.name}
@@ -137,10 +277,27 @@ export default function Header() {
       {/* Mobile Menu */}
       {mobileMenuOpen && (
         <div className="md:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setMobileMenuOpen(false)}>
-          <div className="w-72 h-full bg-white p-6 animate-slide-down" onClick={(e) => e.stopPropagation()}>
+          <div className="w-72 h-full bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="font-display text-2xl font-bold mb-8">
               V<span className="text-accent">ender</span>
             </div>
+
+            {user && (
+              <div className="flex items-center gap-3 mb-6 pb-4 border-b border-warm-border">
+                {avatarUrl ? (
+                  <Image src={avatarUrl} alt="" width={40} height={40} className="w-10 h-10 rounded-full object-cover" />
+                ) : (
+                  <div className="w-10 h-10 rounded-full bg-accent flex items-center justify-center text-white font-bold">
+                    {(user.full_name || '?').charAt(0).toUpperCase()}
+                  </div>
+                )}
+                <div>
+                  <p className="text-sm font-semibold">{user.full_name}</p>
+                  <p className="text-xs text-gray-500">{user.email}</p>
+                </div>
+              </div>
+            )}
+
             <nav className="space-y-1">
               {categories.map((cat) => (
                 <Link
@@ -156,9 +313,20 @@ export default function Header() {
               <Link href="/vendor/apply" className="block py-3 px-4 rounded-lg text-sm font-medium text-accent-dark hover:bg-warm-100">
                 Sell on Vender
               </Link>
-              <Link href="/login" className="block py-3 px-4 rounded-lg text-sm font-medium hover:bg-warm-100">
-                Sign In / Register
-              </Link>
+              {user ? (
+                <>
+                  <Link href="/account" className="block py-3 px-4 rounded-lg text-sm font-medium hover:bg-warm-100" onClick={() => setMobileMenuOpen(false)}>
+                    My Account
+                  </Link>
+                  <button onClick={handleLogout} className="block w-full text-left py-3 px-4 rounded-lg text-sm font-medium text-red-600 hover:bg-red-50">
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link href="/login" className="block py-3 px-4 rounded-lg text-sm font-medium hover:bg-warm-100">
+                  Sign In / Register
+                </Link>
+              )}
             </nav>
           </div>
         </div>
