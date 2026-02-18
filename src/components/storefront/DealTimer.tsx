@@ -11,7 +11,8 @@ export default function DealTimer({ endsAt, label = 'Flash Sale' }: DealTimerPro
   const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 })
 
   useEffect(() => {
-    const endTime = endsAt ? new Date(endsAt).getTime() : Date.now() + 8 * 60 * 60 * 1000
+    if (!endsAt) return
+    const endTime = new Date(endsAt).getTime()
 
     const tick = () => {
       const diff = Math.max(0, endTime - Date.now())
@@ -26,6 +27,9 @@ export default function DealTimer({ endsAt, label = 'Flash Sale' }: DealTimerPro
     const interval = setInterval(tick, 1000)
     return () => clearInterval(interval)
   }, [endsAt])
+
+  // Don't render if there's no active deal
+  if (!endsAt) return null
 
   const pad = (n: number) => String(n).padStart(2, '0')
 

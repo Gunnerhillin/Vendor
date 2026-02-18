@@ -12,23 +12,23 @@ export default function VendorSettingsPage() {
         <h2 className="font-semibold text-lg mb-6">Brand Profile</h2>
         <div className="space-y-5">
           <div className="flex items-center gap-6">
-            <div className="w-20 h-20 rounded-full bg-accent-light flex items-center justify-center text-3xl font-display font-bold">H</div>
+            <div className="w-20 h-20 rounded-full bg-accent-light flex items-center justify-center text-3xl font-display font-bold">?</div>
             <button className="btn-secondary btn-sm"><Upload size={14} /> Upload Logo</button>
           </div>
           <div>
             <label className="label">Business Name</label>
-            <input type="text" defaultValue="Haven Home Co." className="input" />
+            <input type="text" defaultValue="" placeholder="Your business name" className="input" />
           </div>
           <div>
             <label className="label">Store URL</label>
             <div className="flex items-center">
               <span className="text-sm text-gray-400 bg-warm-100 px-4 py-3 rounded-l-lg border border-r-0 border-warm-border">vender.com/shop/</span>
-              <input type="text" defaultValue="haven-home-co" className="input rounded-l-none" />
+              <input type="text" defaultValue="" placeholder="your-store-url" className="input rounded-l-none" />
             </div>
           </div>
           <div>
             <label className="label">Description</label>
-            <textarea defaultValue="Handmade home goods crafted with intention." className="input min-h-[100px] resize-y" />
+            <textarea defaultValue="" placeholder="Describe your brand..." className="input min-h-[100px] resize-y" />
           </div>
           <div>
             <label className="label">Banner Image</label>

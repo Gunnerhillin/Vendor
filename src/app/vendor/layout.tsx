@@ -29,7 +29,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         </Link>
         <div className="flex items-center gap-4">
           <Link href="/" className="text-sm text-gray-500 hover:text-accent transition-colors">View Storefront</Link>
-          <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center text-sm font-bold">H</div>
+          <div className="w-8 h-8 rounded-full bg-accent-light flex items-center justify-center text-sm font-bold">V</div>
         </div>
       </div>
 
@@ -37,9 +37,9 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-warm-border min-h-[calc(100vh-64px)] sticky top-16 hidden md:block">
           <div className="p-6 border-b border-warm-border text-center">
-            <div className="w-16 h-16 rounded-full bg-accent-light mx-auto mb-3 flex items-center justify-center text-2xl font-display font-bold">H</div>
-            <h3 className="font-semibold">Haven Home Co.</h3>
-            <p className="text-xs text-gray-400">Vendor since 2024</p>
+            <div className="w-16 h-16 rounded-full bg-accent-light mx-auto mb-3 flex items-center justify-center text-2xl font-display font-bold">V</div>
+            <h3 className="font-semibold">Your Store</h3>
+            <p className="text-xs text-gray-400">Vendor Portal</p>
           </div>
           <nav className="p-3">
             {sidebarLinks.map(({ href, label, icon: Icon }) => (
