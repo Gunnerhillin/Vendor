@@ -23,7 +23,7 @@ export default function AdminRevenuePage() {
         <div className="card p-6">
           <div className="text-sm text-gray-500 mb-1 flex items-center gap-1"><TrendingUp size={14} /> Platform Commission</div>
           <p className="text-2xl font-bold">$0</p>
-          <p className="text-xs text-gray-400 font-semibold mt-1">15% avg rate</p>
+          <p className="text-xs text-gray-400 font-semibold mt-1">25% avg rate</p>
         </div>
         <div className="card p-6">
           <div className="text-sm text-gray-500 mb-1 flex items-center gap-1"><ShoppingCart size={14} /> Total Orders</div>

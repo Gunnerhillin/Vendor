@@ -2,7 +2,7 @@ export const SITE_NAME = 'Vender'
 export const SITE_DESCRIPTION = 'Discover deals you\'ll love from independent brands'
 export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-export const DEFAULT_COMMISSION_RATE = 0.15 // 15% platform commission
+export const DEFAULT_COMMISSION_RATE = 0.25 // 25% platform commission
 
 export const PRODUCT_STATUSES = {
   DRAFT: 'draft',

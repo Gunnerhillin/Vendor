@@ -20,7 +20,7 @@ export default function VendorEarningsPage() {
         </div>
         <div className="card p-6">
           <div className="flex items-center gap-2 text-sm text-gray-500 mb-2"><Calendar size={16} /> Commission Rate</div>
-          <p className="text-3xl font-bold">15%</p>
+          <p className="text-3xl font-bold">25%</p>
           <p className="text-xs text-gray-500 mt-1">Platform fee per sale</p>
         </div>
       </div>
