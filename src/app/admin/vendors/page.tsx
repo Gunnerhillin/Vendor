@@ -16,6 +16,7 @@ interface VendorRow {
   product_count: number
   total_revenue: number
   commission_rate: number
+  sample_images: string[] | null
 }
 
 interface ProductRow {
@@ -75,19 +76,10 @@ export default function AdminVendorsPage() {
 
       setVendorProducts(prev => ({ ...prev, [vendorId]: products || [] }))
 
-      // Fetch application images from storage
-      const { data: files } = await supabase.storage
-        .from("vendor-assets")
-        .list(`vendor-applications/${userId}`)
-
-      if (files && files.length > 0) {
-        const urls = files.map(f => {
-          const { data } = supabase.storage
-            .from("vendor-assets")
-            .getPublicUrl(`vendor-applications/${userId}/${f.name}`)
-          return data.publicUrl
-        })
-        setVendorImages(prev => ({ ...prev, [vendorId]: urls }))
+      // Get sample images from the vendor record (stored during application)
+      const vendor = vendors.find(v => v.id === vendorId)
+      if (vendor?.sample_images && vendor.sample_images.length > 0) {
+        setVendorImages(prev => ({ ...prev, [vendorId]: vendor.sample_images as string[] }))
       }
 
       setLoadingProducts(null)

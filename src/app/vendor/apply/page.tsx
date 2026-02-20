@@ -168,7 +168,7 @@ export default function VendorApplyPage() {
           total_revenue: 0,
           product_count: 0,
           applied_at: new Date().toISOString(),
-          // Store application details as JSON in description or a separate field
+          sample_images: imageUrls,
         })
 
       if (insertErr) {
