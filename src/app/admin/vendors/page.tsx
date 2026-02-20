@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Search, ChevronDown, ChevronUp, ExternalLink, DollarSign, Package, Tag, Globe, Image as ImageIcon } from "lucide-react"
+import { Search, ChevronDown, ChevronUp, ExternalLink, DollarSign, Package, Tag, Globe, Image as ImageIcon, Trash2 } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 interface VendorRow {
@@ -113,6 +113,22 @@ export default function AdminVendorsPage() {
           p.id === productId ? { ...p, status: newStatus } : p
         )
       }))
+    }
+  }
+
+  const handleDeleteVendor = async (vendorId: string, businessName: string) => {
+    if (!confirm(`Are you sure you want to delete "${businessName}"? This will permanently remove the vendor application and cannot be undone.`)) {
+      return
+    }
+
+    const { error } = await supabase
+      .from("vendors")
+      .delete()
+      .eq("id", vendorId)
+
+    if (!error) {
+      setVendors(prev => prev.filter(v => v.id !== vendorId))
+      if (expandedVendor === vendorId) setExpandedVendor(null)
     }
   }
 
@@ -230,6 +246,13 @@ export default function AdminVendorsPage() {
                         Approve
                       </button>
                     )}
+                    <button
+                      onClick={() => handleDeleteVendor(v.id, v.business_name)}
+                      className="p-1.5 rounded-full text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all"
+                      title="Delete application"
+                    >
+                      <Trash2 size={15} />
+                    </button>
                   </div>
 
                   {/* Expand chevron */}
