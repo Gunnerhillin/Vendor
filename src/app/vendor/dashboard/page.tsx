@@ -1,22 +1,84 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { TrendingUp, Package, ShoppingCart, DollarSign, ArrowUpRight } from "lucide-react"
-
-const stats = [
-  { label: "Total Revenue", value: "$0", change: "No data yet", up: true, icon: DollarSign },
-  { label: "Orders This Month", value: "0", change: "No orders yet", up: true, icon: ShoppingCart },
-  { label: "Active Products", value: "0", change: "No products yet", up: true, icon: Package },
-  { label: "Next Payout", value: "$0", change: "No payouts yet", up: true, icon: TrendingUp },
-]
-
-const recentOrders: any[] = []
-
-const revenueData: any[] = []
+import { createClient } from "@/lib/supabase/client"
+import { formatPrice, formatDate } from "@/lib/utils"
+import Link from "next/link"
 
 export default function VendorDashboard() {
+  const supabase = createClient()
+  const [loading, setLoading] = useState(true)
+  const [totalRevenue, setTotalRevenue] = useState(0)
+  const [totalOrders, setTotalOrders] = useState(0)
+  const [activeProducts, setActiveProducts] = useState(0)
+  const [pendingProducts, setPendingProducts] = useState(0)
+  const [recentOrders, setRecentOrders] = useState<any[]>([])
+  const [vendorName, setVendorName] = useState("")
+
+  useEffect(() => {
+    async function fetchDashboard() {
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
+
+      const { data: vendor } = await supabase
+        .from("vendors")
+        .select("*")
+        .eq("user_id", user.id)
+        .single()
+
+      if (!vendor) return
+      setVendorName(vendor.business_name)
+      setTotalRevenue(vendor.total_revenue || 0)
+
+      // Products
+      const { data: products } = await supabase
+        .from("products")
+        .select("id, status")
+        .eq("vendor_id", vendor.id)
+
+      if (products) {
+        setActiveProducts(products.filter(p => p.status === "approved").length)
+        setPendingProducts(products.filter(p => p.status === "pending").length)
+      }
+
+      // Orders for this vendor
+      const { data: orderItems } = await supabase
+        .from("order_items")
+        .select("*, order:orders(id, status, created_at, total, customer_id, customer:profiles(full_name)), product:products(title)")
+        .eq("vendor_id", vendor.id)
+        .order("created_at", { ascending: false })
+        .limit(10)
+
+      if (orderItems) {
+        setTotalOrders(orderItems.length)
+        setRecentOrders(orderItems)
+      }
+
+      setLoading(false)
+    }
+    fetchDashboard()
+  }, [])
+
+  const stats = [
+    { label: "Total Revenue", value: formatPrice(totalRevenue), change: vendorName ? "From all sales" : "No data yet", up: true, icon: DollarSign },
+    { label: "Orders", value: String(totalOrders), change: totalOrders > 0 ? `${totalOrders} total` : "No orders yet", up: true, icon: ShoppingCart },
+    { label: "Active Products", value: String(activeProducts), change: pendingProducts > 0 ? `${pendingProducts} pending` : "All approved", up: true, icon: Package },
+    { label: "Next Payout", value: "$0", change: "No payouts yet", up: true, icon: TrendingUp },
+  ]
+
+  if (loading) {
+    return (
+      <div className="max-w-6xl flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    )
+  }
+
   return (
     <div className="max-w-6xl">
       <h1 className="font-display text-2xl font-semibold mb-6">Vendor Dashboard</h1>
 
-      {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {stats.map(({ label, value, change, up, icon: Icon }) => (
           <div key={label} className="card p-6">
@@ -33,38 +95,11 @@ export default function VendorDashboard() {
         ))}
       </div>
 
-      {/* Revenue Chart */}
-      <div className="card mb-8">
-        <div className="flex items-center justify-between p-6 border-b border-warm-border">
-          <h2 className="font-semibold">Revenue Overview</h2>
-          <button className="text-xs font-medium text-gray-500 border border-warm-border rounded-full px-4 py-1.5 hover:bg-warm-100">
-            Last 6 Months
-          </button>
-        </div>
-        {revenueData.length === 0 ? (
-          <div className="p-12 text-center text-gray-400">
-            <p>No revenue data yet</p>
-          </div>
-        ) : (
-          <div className="p-6 flex items-end gap-3 h-60">
-            {revenueData.map(({ month, height }) => (
-              <div key={month} className="flex-1 flex flex-col items-center gap-2">
-                <div
-                  className={`w-full rounded-t-md transition-all hover:opacity-80 ${month === "Feb" ? "bg-accent" : "bg-accent-light"}`}
-                  style={{ height: `${height}%` }}
-                />
-                <span className="text-xs text-gray-400">{month}</span>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Recent Orders */}
       <div className="card">
         <div className="flex items-center justify-between p-6 border-b border-warm-border">
           <h2 className="font-semibold">Recent Orders</h2>
-          <button className="text-xs font-medium text-accent-dark hover:underline">View All</button>
+          <Link href="/vendor/orders" className="text-xs font-medium text-accent-dark hover:underline">View All</Link>
         </div>
         {recentOrders.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
@@ -83,24 +118,20 @@ export default function VendorDashboard() {
                 </tr>
               </thead>
               <tbody>
-                {recentOrders.map((order) => (
-                  <tr key={order.id} className="border-b border-warm-border last:border-0 hover:bg-warm-100/50">
-                    <td className="px-6 py-4 text-sm font-medium">{order.id}</td>
-                    <td className="px-6 py-4 text-sm">{order.product}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{order.customer}</td>
-                    <td className="px-6 py-4 text-sm font-medium">{order.total}</td>
+                {recentOrders.map((item) => (
+                  <tr key={item.id} className="border-b border-warm-border last:border-0 hover:bg-warm-100/50">
+                    <td className="px-6 py-4 text-sm font-medium">#{item.order?.id?.slice(0, 8)}</td>
+                    <td className="px-6 py-4 text-sm">{item.product?.title || "—"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{item.order?.customer?.full_name || "—"}</td>
+                    <td className="px-6 py-4 text-sm font-medium">{formatPrice(item.unit_price * item.quantity)}</td>
                     <td className="px-6 py-4">
-                      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
-                        order.status === "Shipped" ? "bg-green-50 text-green-700" :
-                        order.status === "Processing" ? "bg-yellow-50 text-yellow-700" :
-                        "bg-blue-50 text-blue-700"
+                      <span className={`badge ${
+                        item.status === "shipped" || item.status === "delivered" ? "badge-success" :
+                        item.status === "processing" ? "badge-warning" :
+                        item.status === "cancelled" ? "bg-red-100 text-red-700" :
+                        "badge-info"
                       }`}>
-                        <span className={`w-1.5 h-1.5 rounded-full ${
-                          order.status === "Shipped" ? "bg-green-500" :
-                          order.status === "Processing" ? "bg-yellow-500" :
-                          "bg-blue-500"
-                        }`} />
-                        {order.status}
+                        {item.status}
                       </span>
                     </td>
                   </tr>

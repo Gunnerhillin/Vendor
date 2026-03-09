@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import Header from '@/components/shared/Header'
 import Footer from '@/components/shared/Footer'
 import CartDrawer from '@/components/shared/CartDrawer'
@@ -9,14 +10,41 @@ import ProductCard from '@/components/storefront/ProductCard'
 import VendorSpotlight from '@/components/storefront/VendorSpotlight'
 import VendorCTA from '@/components/storefront/VendorCTA'
 import Link from 'next/link'
+import { createClient } from '@/lib/supabase/client'
 import type { Product } from '@/types'
 
-// Demo products for initial build — will be replaced with Supabase queries
-const demoProducts: Product[] = []
-
 export default function HomePage() {
-  const trending = demoProducts.slice(0, 4)
-  const moreDeals = demoProducts.slice(4)
+  const [trending, setTrending] = useState<Product[]>([])
+  const [newArrivals, setNewArrivals] = useState<Product[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    async function fetchProducts() {
+      const supabase = createClient()
+
+      // Trending (most sold)
+      const { data: trendingData } = await supabase
+        .from('products')
+        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+        .eq('status', 'approved')
+        .order('sold_count', { ascending: false })
+        .limit(4)
+
+      if (trendingData) setTrending(trendingData as any)
+
+      // New arrivals
+      const { data: newData } = await supabase
+        .from('products')
+        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+        .eq('status', 'approved')
+        .order('created_at', { ascending: false })
+        .limit(8)
+
+      if (newData) setNewArrivals(newData as any)
+      setLoading(false)
+    }
+    fetchProducts()
+  }, [])
 
   return (
     <>
@@ -39,16 +67,13 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Deal Timer */}
         <DealTimer />
 
         {/* Categories */}
         <section className="section-padding py-12 md:py-16">
           <div className="flex items-baseline justify-between mb-8">
             <h2 className="text-2xl font-display font-bold text-primary">Shop by Category</h2>
-            <Link href="/search" className="text-sm font-semibold text-accent-dark hover:underline">
-              View All &rarr;
-            </Link>
+            <Link href="/search" className="text-sm font-semibold text-accent-dark hover:underline">View All &rarr;</Link>
           </div>
           <CategoryGrid />
         </section>
@@ -57,11 +82,13 @@ export default function HomePage() {
         <section className="section-padding pb-12 md:pb-16">
           <div className="flex items-baseline justify-between mb-8">
             <h2 className="text-2xl font-display font-bold text-primary">Trending Now</h2>
-            <Link href="/search?sort=popular" className="text-sm font-semibold text-accent-dark hover:underline">
-              See All &rarr;
-            </Link>
+            <Link href="/search?sort=popular" className="text-sm font-semibold text-accent-dark hover:underline">See All &rarr;</Link>
           </div>
-          {trending.length === 0 ? (
+          {loading ? (
+            <div className="text-center py-12">
+              <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto" />
+            </div>
+          ) : trending.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-400">No deals available yet — check back soon!</p>
             </div>
@@ -82,21 +109,19 @@ export default function HomePage() {
           <VendorSpotlight />
         </section>
 
-        {/* More Deals */}
+        {/* New Arrivals */}
         <section className="section-padding pb-12 md:pb-16">
           <div className="flex items-baseline justify-between mb-8">
-            <h2 className="text-2xl font-display font-bold text-primary">More Deals Ending Soon</h2>
-            <Link href="/search" className="text-sm font-semibold text-accent-dark hover:underline">
-              See All &rarr;
-            </Link>
+            <h2 className="text-2xl font-display font-bold text-primary">New Arrivals</h2>
+            <Link href="/search?sort=newest" className="text-sm font-semibold text-accent-dark hover:underline">See All &rarr;</Link>
           </div>
-          {moreDeals.length === 0 ? (
+          {newArrivals.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-400">No deals available yet — check back soon!</p>
+              <p className="text-gray-400">No new arrivals yet — check back soon!</p>
             </div>
           ) : (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
-              {moreDeals.map((p) => (
+              {newArrivals.slice(0, 4).map((p) => (
                 <ProductCard key={p.id} product={p} />
               ))}
             </div>
