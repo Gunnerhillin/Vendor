@@ -102,16 +102,44 @@ export default function HomePage() {
       <CartDrawer />
       <main className="min-h-screen">
         {/* Hero */}
-        <div className="bg-gradient-to-br from-warm-100 via-warm-200 to-accent-light relative overflow-hidden">
-          {/* Decorative spinning rings */}
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-accent/[0.07] animate-spin-slow pointer-events-none" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full border border-dashed border-accent/[0.05] pointer-events-none" style={{ animation: 'spin-slow 30s linear infinite reverse' }} />
+        <div className="bg-gradient-to-br from-warm-100 via-warm-200 to-accent-light animate-gradient-shift relative overflow-hidden">
+          {/* Morphing blobs */}
+          <div className="absolute top-[-20%] right-[-10%] w-[500px] h-[500px] bg-accent/[0.10] animate-morph blur-3xl pointer-events-none" style={{ animationDuration: '12s' }} />
+          <div className="absolute bottom-[-25%] left-[-8%] w-[400px] h-[400px] bg-accent/[0.07] animate-morph blur-3xl pointer-events-none" style={{ animationDuration: '15s', animationDelay: '3s' }} />
+          <div className="absolute top-[20%] left-[60%] w-[250px] h-[250px] bg-accent/[0.05] animate-morph blur-2xl pointer-events-none" style={{ animationDuration: '18s', animationDelay: '6s' }} />
 
-          {/* Floating orbs */}
-          <div className="absolute top-[-50%] right-[-20%] w-[500px] h-[500px] bg-accent/[0.08] rounded-full blur-3xl animate-pulse-soft pointer-events-none" />
-          <div className="absolute bottom-[-30%] left-[-10%] w-[350px] h-[350px] bg-accent/[0.05] rounded-full blur-3xl pointer-events-none" style={{ animation: 'pulse-soft 5s ease-in-out infinite 1.5s' }} />
+          {/* Spinning rings */}
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] rounded-full border border-accent/[0.06] animate-spin-slow pointer-events-none" />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full border border-dashed border-accent/[0.04] pointer-events-none" style={{ animation: 'spin-slow 25s linear infinite reverse' }} />
+          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] rounded-full border border-accent/[0.03] animate-spin-slow pointer-events-none" style={{ animationDuration: '50s' }} />
 
-          <div className="section-padding py-16 md:py-24 text-center relative">
+          {/* Floating geometric shapes */}
+          <div className="absolute top-[15%] left-[12%] w-16 h-16 border-2 border-accent/[0.12] rounded-xl animate-drift rotate-12 pointer-events-none" />
+          <div className="absolute top-[25%] right-[15%] w-12 h-12 border-2 border-accent/[0.10] rounded-full animate-drift-reverse pointer-events-none" />
+          <div className="absolute bottom-[20%] left-[20%] w-10 h-10 border-2 border-accent/[0.08] rotate-45 animate-drift pointer-events-none" style={{ animationDelay: '2s' }} />
+          <div className="absolute bottom-[30%] right-[10%] w-14 h-14 border-2 border-accent/[0.10] rounded-xl animate-drift-reverse pointer-events-none" style={{ animationDelay: '4s', transform: 'rotate(-15deg)' }} />
+          <div className="absolute top-[60%] left-[8%] w-8 h-8 border-2 border-accent/[0.06] rounded-full animate-drift pointer-events-none" style={{ animationDelay: '1s' }} />
+
+          {/* Twinkling dots */}
+          <div className="absolute top-[10%] left-[30%] w-2 h-2 bg-accent/30 rounded-full animate-twinkle pointer-events-none" />
+          <div className="absolute top-[35%] left-[75%] w-1.5 h-1.5 bg-accent/25 rounded-full animate-twinkle pointer-events-none" style={{ animationDelay: '1s' }} />
+          <div className="absolute top-[70%] left-[45%] w-2 h-2 bg-accent/20 rounded-full animate-twinkle pointer-events-none" style={{ animationDelay: '2s' }} />
+          <div className="absolute top-[20%] right-[25%] w-1.5 h-1.5 bg-accent/30 rounded-full animate-twinkle pointer-events-none" style={{ animationDelay: '0.5s' }} />
+          <div className="absolute bottom-[15%] left-[60%] w-2 h-2 bg-accent/25 rounded-full animate-twinkle pointer-events-none" style={{ animationDelay: '1.5s' }} />
+          <div className="absolute top-[50%] left-[15%] w-1 h-1 bg-accent/30 rounded-full animate-twinkle pointer-events-none" style={{ animationDelay: '2.5s' }} />
+          <div className="absolute top-[80%] right-[35%] w-1.5 h-1.5 bg-accent/20 rounded-full animate-twinkle pointer-events-none" style={{ animationDelay: '3s' }} />
+
+          {/* Rising particles */}
+          <div className="absolute bottom-0 left-[20%] w-1 h-1 bg-accent/20 rounded-full animate-rise pointer-events-none" style={{ animationDuration: '7s' }} />
+          <div className="absolute bottom-0 left-[40%] w-1.5 h-1.5 bg-accent/15 rounded-full animate-rise pointer-events-none" style={{ animationDuration: '9s', animationDelay: '2s' }} />
+          <div className="absolute bottom-0 left-[65%] w-1 h-1 bg-accent/20 rounded-full animate-rise pointer-events-none" style={{ animationDuration: '8s', animationDelay: '4s' }} />
+          <div className="absolute bottom-0 left-[80%] w-1.5 h-1.5 bg-accent/15 rounded-full animate-rise pointer-events-none" style={{ animationDuration: '10s', animationDelay: '1s' }} />
+          <div className="absolute bottom-0 left-[50%] w-1 h-1 bg-accent/20 rounded-full animate-rise pointer-events-none" style={{ animationDuration: '6s', animationDelay: '3s' }} />
+
+          {/* Shimmer streak */}
+          <div className="absolute inset-0 animate-shimmer opacity-30 pointer-events-none" />
+
+          <div className="section-padding py-20 md:py-28 text-center relative">
             <div className="animate-fade-in-up">
               <h1 className="font-display text-4xl md:text-5xl lg:text-6xl font-bold leading-tight mb-5">
                 Discover Deals You&apos;ll Love
