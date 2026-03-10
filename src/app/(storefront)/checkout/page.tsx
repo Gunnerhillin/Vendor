@@ -1,11 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/use-cart'
 import { formatPrice } from '@/lib/utils'
-import { Lock, CreditCard, Check } from 'lucide-react'
+import { Lock, CreditCard, Check, Truck, Loader2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+
+interface ShippingRate {
+  id: string
+  carrier: string
+  service: string
+  rate: string
+  delivery_days: number | null
+}
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -25,6 +33,12 @@ export default function CheckoutPage() {
   const [state, setState] = useState('')
   const [zip, setZip] = useState('')
 
+  // Shipping rates
+  const [shippingRates, setShippingRates] = useState<ShippingRate[]>([])
+  const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null)
+  const [ratesLoading, setRatesLoading] = useState(false)
+  const [shipmentId, setShipmentId] = useState<string | null>(null)
+
   useEffect(() => {
     async function checkAuth() {
       const supabase = createClient()
@@ -43,10 +57,57 @@ export default function CheckoutPage() {
     checkAuth()
   }, [])
 
+  // Fetch shipping rates when address is filled
+  const fetchRates = useCallback(async () => {
+    if (!address || !city || !state || !zip) return
+
+    setRatesLoading(true)
+    try {
+      const res = await fetch('/api/shipping/rates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          address: {
+            name: `${firstName} ${lastName}`.trim() || 'Customer',
+            street1: address,
+            street2: apartment,
+            city,
+            state,
+            zip,
+            country: 'US',
+          },
+        }),
+      })
+      const data = await res.json()
+      if (data.rates) {
+        setShippingRates(data.rates)
+        setShipmentId(data.shipmentId)
+        // Auto-select cheapest rate
+        if (data.rates.length > 0 && !selectedRate) {
+          setSelectedRate(data.rates[0])
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch rates:', err)
+    } finally {
+      setRatesLoading(false)
+    }
+  }, [address, city, state, zip, firstName, lastName, apartment, selectedRate])
+
+  // Auto-fetch rates when zip changes (debounced)
+  useEffect(() => {
+    if (zip.length >= 5 && address && city && state) {
+      const timeout = setTimeout(fetchRates, 600)
+      return () => clearTimeout(timeout)
+    }
+  }, [zip, address, city, state, fetchRates])
+
   const subtotal = total()
   const tax = Math.round(subtotal * 0.08 * 100) / 100
-  const shipping = subtotal >= 50 ? 0 : 5.99
-  const orderTotal = Math.round((subtotal + tax + shipping) * 100) / 100
+  const shippingCost = selectedRate
+    ? (subtotal >= 50 ? 0 : parseFloat(selectedRate.rate))
+    : (subtotal >= 50 ? 0 : 5.99)
+  const orderTotal = Math.round((subtotal + tax + shippingCost) * 100) / 100
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -74,6 +135,13 @@ export default function CheckoutPage() {
             postal_code: zip,
             country: 'US',
           },
+          shippingRate: selectedRate ? {
+            id: selectedRate.id,
+            carrier: selectedRate.carrier,
+            service: selectedRate.service,
+            cost: shippingCost,
+            shipmentId,
+          } : undefined,
         }),
       })
 
@@ -100,7 +168,7 @@ export default function CheckoutPage() {
             <Check size={32} className="text-green-600" />
           </div>
           <h1 className="font-display text-2xl font-semibold mb-3">Order Placed!</h1>
-          <p className="text-gray-500 mb-8">Thank you for your order. You'll receive a confirmation email shortly.</p>
+          <p className="text-gray-500 mb-8">Thank you for your order. You&apos;ll receive a confirmation email shortly.</p>
           <button onClick={() => router.push('/account/orders')} className="btn-primary">View My Orders</button>
         </div>
       </div>
@@ -160,6 +228,73 @@ export default function CheckoutPage() {
               </div>
             </div>
 
+            {/* Shipping Method */}
+            <div>
+              <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Truck size={20} />
+                Shipping Method
+              </h2>
+
+              {ratesLoading ? (
+                <div className="card p-6 flex items-center justify-center gap-2 text-gray-400">
+                  <Loader2 size={18} className="animate-spin" />
+                  <span className="text-sm">Getting shipping rates...</span>
+                </div>
+              ) : shippingRates.length > 0 ? (
+                <div className="space-y-2">
+                  {shippingRates.slice(0, 4).map((rate) => {
+                    const cost = subtotal >= 50 ? 0 : parseFloat(rate.rate)
+                    const isSelected = selectedRate?.id === rate.id
+                    return (
+                      <label
+                        key={rate.id}
+                        className={`flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                          isSelected
+                            ? 'border-accent bg-accent/5'
+                            : 'border-warm-border hover:border-accent/40'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="radio"
+                            name="shipping_rate"
+                            checked={isSelected}
+                            onChange={() => setSelectedRate(rate)}
+                            className="accent-accent"
+                          />
+                          <div>
+                            <p className="text-sm font-medium">{rate.carrier} — {rate.service}</p>
+                            {rate.delivery_days && (
+                              <p className="text-xs text-gray-400">
+                                {rate.delivery_days === 1 ? 'Next day delivery' : `${rate.delivery_days} business days`}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <span className={`text-sm font-semibold ${cost === 0 ? 'text-green-600' : ''}`}>
+                          {cost === 0 ? 'Free' : formatPrice(cost)}
+                        </span>
+                      </label>
+                    )
+                  })}
+                  {subtotal >= 50 && (
+                    <p className="text-xs text-green-600 mt-1 pl-1">Free shipping applied on orders over $50</p>
+                  )}
+                </div>
+              ) : (
+                <div className="card p-4 bg-warm-100/50">
+                  <p className="text-sm text-gray-500 text-center">
+                    {address && city && state && zip
+                      ? 'Unable to fetch rates — using standard shipping'
+                      : 'Enter your address to see shipping options'}
+                  </p>
+                  {subtotal >= 50 && (
+                    <p className="text-xs text-green-600 text-center mt-1">Free shipping on orders over $50</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             {/* Payment */}
             <div>
               <h2 className="font-semibold text-lg mb-4 flex items-center gap-2">
@@ -204,7 +339,15 @@ export default function CheckoutPage() {
             </div>
             <div className="border-t border-warm-border pt-4 space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
-              <div className="flex justify-between"><span className="text-gray-500">Shipping</span><span className={shipping === 0 ? 'text-green-600' : ''}>{shipping === 0 ? 'Free' : formatPrice(shipping)}</span></div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Shipping</span>
+                <span className={shippingCost === 0 ? 'text-green-600' : ''}>
+                  {shippingCost === 0 ? 'Free' : formatPrice(shippingCost)}
+                </span>
+              </div>
+              {selectedRate && shippingCost > 0 && (
+                <p className="text-[11px] text-gray-400 text-right">{selectedRate.carrier} {selectedRate.service}</p>
+              )}
               <div className="flex justify-between"><span className="text-gray-500">Tax (8%)</span><span>{formatPrice(tax)}</span></div>
               <div className="border-t border-warm-border my-2" />
               <div className="flex justify-between text-lg font-bold"><span>Total</span><span>{formatPrice(orderTotal)}</span></div>

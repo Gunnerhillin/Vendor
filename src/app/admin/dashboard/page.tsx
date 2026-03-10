@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { DollarSign, Store, Package, Clock, ArrowUpRight, Download, FileText, Presentation, Globe } from "lucide-react"
+import { DollarSign, Store, Package, Clock, ArrowUpRight, Download, FileText, Presentation, Globe, AlertTriangle, CheckCircle2, Circle } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
@@ -183,6 +183,52 @@ export default function AdminDashboard() {
             </div>
             <Download size={16} className="text-gray-300 group-hover:text-accent transition-colors" />
           </a>
+        </div>
+      </div>
+
+      {/* Launch Readiness — Placeholder Data Reminders */}
+      <div className="card mb-8 border-2 border-amber-200">
+        <div className="flex items-center justify-between p-6 border-b border-warm-border bg-amber-50/50">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-100 flex items-center justify-center text-amber-600">
+              <AlertTriangle size={20} />
+            </div>
+            <div>
+              <h2 className="font-semibold">Launch Readiness Checklist</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Replace placeholder data before going live</p>
+            </div>
+          </div>
+          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-100 text-amber-700">Action Required</span>
+        </div>
+        <div className="divide-y divide-warm-border">
+          {[
+            { done: false, label: "Configure EasyPost API key", detail: "Add EASYPOST_API_KEY to .env.local (get from easypost.com dashboard). Checkout will use fallback rates until configured." },
+            { done: false, label: "Set up Stripe webhook secret", detail: "STRIPE_WEBHOOK_SECRET is still a placeholder. Create a webhook endpoint in Stripe Dashboard pointing to /api/webhooks/stripe." },
+            { done: false, label: "Update warehouse/from address", detail: "src/lib/easypost.ts has DEFAULT_FROM_ADDRESS set to placeholder '123 Commerce St'. Update with your real fulfillment address." },
+            { done: false, label: "Onboard first 3-5 vendors", detail: "Homepage shows placeholder products until real vendors list items. Recruit founding vendors to fill Trending & New Arrivals." },
+            { done: false, label: "Replace placeholder products on homepage", detail: "page.tsx has PLACEHOLDER_PRODUCTS array — these auto-hide once real approved products exist in the database." },
+            { done: false, label: "Feature a real vendor in Spotlight", detail: "VendorSpotlight shows 'Your Brand Here' placeholder. Approve a vendor and mark them as featured to replace it." },
+            { done: false, label: "Update trust bar claims", detail: "Homepage trust bar says 'Free Shipping over $50' and '30-day returns'. Confirm these match your actual policies." },
+            { done: false, label: "Wire up newsletter signup", detail: "Footer email form is visual only. Connect to Mailchimp, ConvertKit, or a Supabase table to capture leads." },
+            { done: false, label: "Wire up Contact form", detail: "Contact page (/contact) has a form but submissions aren't emailed yet. Create /api/contact route or connect to support tool." },
+            { done: false, label: "Add real OG image for social sharing", detail: "A generated placeholder OG image is at /public/og-image.png. Replace with a branded image (1200x630px)." },
+            { done: false, label: "Set up Google Analytics / Vercel Analytics", detail: "No analytics are installed yet. Add tracking before launch to measure traffic and conversions." },
+            { done: true, label: "Create About and Contact pages", detail: "About (/about) and Contact (/contact) pages are now live with placeholder content. Update with real company info." },
+          ].map((item, i) => (
+            <div key={i} className="flex items-start gap-3 px-6 py-4">
+              <div className="pt-0.5">
+                {item.done ? (
+                  <CheckCircle2 size={18} className="text-green-500" />
+                ) : (
+                  <Circle size={18} className="text-amber-400" />
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <h4 className={`text-sm font-medium ${item.done ? 'line-through text-gray-400' : 'text-primary'}`}>{item.label}</h4>
+                <p className="text-xs text-gray-400 mt-0.5 leading-relaxed">{item.detail}</p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 

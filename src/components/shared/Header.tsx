@@ -144,7 +144,7 @@ export default function Header() {
               <Search size={22} />
             </button>
 
-            <Link href="/marketing/vendor-landing-page.html" className="hidden lg:block text-sm font-semibold text-accent-dark hover:text-accent transition-all duration-300">
+            <Link href="/marketing/vendor-landing-page.html" className="hidden md:block text-sm font-semibold text-accent-dark hover:text-accent transition-all duration-300">
               Sell on Vender
             </Link>
 
