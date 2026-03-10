@@ -13,15 +13,31 @@ export default function ContactPage() {
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
 
+  const [error, setError] = useState('')
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
-    // TODO: Wire to /api/contact endpoint or Resend email
-    // For now, simulate submission
-    await new Promise(r => setTimeout(r, 1000))
-    setSubmitted(true)
-    setLoading(false)
+    try {
+      const res = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, subject, message }),
+      })
+
+      if (!res.ok) {
+        const data = await res.json()
+        throw new Error(data.error || 'Failed to send message')
+      }
+
+      setSubmitted(true)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Something went wrong. Please try again.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -149,6 +165,9 @@ export default function ContactPage() {
                       required
                     />
                   </div>
+                  {error && (
+                    <p className="text-red-600 text-sm bg-red-50 border border-red-200 rounded-lg p-3">{error}</p>
+                  )}
                   <button
                     type="submit"
                     disabled={loading}
