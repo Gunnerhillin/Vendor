@@ -22,18 +22,19 @@ export default function RefundPolicyPage() {
           Vender is a marketplace connecting you with independent vendors. Each product is sold directly by its vendor, and refund policies may vary. This page outlines our general refund framework that all Vender vendors must follow.
         </p>
 
-        <h2>30-Day Return Window</h2>
+        <h2>Return Eligibility</h2>
         <p>
-          You have 30 days from the date of delivery to request a return for most items. To be eligible for a return, the item must be unused, in the same condition you received it, and in its original packaging.
+          Items in returnable condition are eligible for a return. To qualify, the item must be unused, in the same condition you received it, and in its original packaging. Individual vendors may have additional conditions listed on their product pages.
         </p>
 
-        <h2>How to Request a Refund</h2>
+        <h2>How to Request a Return</h2>
         <p>To initiate a return or refund, please follow these steps:</p>
         <ol>
           <li>Go to your <Link href="/account/orders" className="text-accent-dark hover:underline">order history</Link> and find the order.</li>
-          <li>Contact us at <a href="mailto:support@vender.com" className="text-accent-dark hover:underline">support@vender.com</a> with your order number and reason for the return.</li>
-          <li>We will coordinate with the vendor and provide you with return shipping instructions.</li>
+          <li>Click &quot;Request Return&quot; on the item you&apos;d like to return and select a reason.</li>
+          <li>The vendor will review your request and provide return shipping instructions.</li>
           <li>Once the returned item is received and inspected, we will process your refund.</li>
+          <li>If you have trouble with a vendor, contact <a href="mailto:support@vender.com" className="text-accent-dark hover:underline">support@vender.com</a> — our customer service team can override vendor decisions.</li>
         </ol>
 
         <h2>Refund Processing</h2>

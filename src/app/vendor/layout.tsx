@@ -2,12 +2,13 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, MessageSquare, Settings, RotateCcw, LogOut } from "lucide-react"
+import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, MessageSquare, Settings, RotateCcw, Zap } from "lucide-react"
 
 const sidebarLinks = [
   { href: "/vendor/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/vendor/products", label: "Products", icon: Package },
   { href: "/vendor/orders", label: "Orders", icon: ShoppingCart },
+  { href: "/vendor/deals", label: "Flash Deals", icon: Zap },
   { href: "/vendor/returns", label: "Returns", icon: RotateCcw },
   { href: "/vendor/earnings", label: "Earnings", icon: DollarSign },
   { href: "/vendor/analytics", label: "Analytics", icon: BarChart3 },

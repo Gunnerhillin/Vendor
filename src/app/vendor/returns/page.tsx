@@ -80,7 +80,7 @@ export default function VendorReturnsPage() {
         <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />
         <div>
           <p className="font-medium">Site-wide return policy applies</p>
-          <p className="text-xs text-blue-600 mt-0.5">Vender has a standard 30-day return policy. Admin/customer service may override your decisions if a customer contacts them directly.</p>
+          <p className="text-xs text-blue-600 mt-0.5">Vender&apos;s site-wide policy: items in returnable condition can be returned. Admin/customer service may override your decisions if a customer contacts them directly.</p>
         </div>
       </div>
 

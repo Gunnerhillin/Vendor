@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { LayoutDashboard, Store, Package, ShoppingCart, DollarSign, BarChart3, Users, LogOut, RotateCcw } from "lucide-react"
+import { LayoutDashboard, Store, Package, ShoppingCart, DollarSign, BarChart3, Users, LogOut, RotateCcw, Zap } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 const links = [
@@ -13,6 +13,7 @@ const links = [
   { href: "/admin/products", label: "Products", icon: Package },
   { href: "/admin/orders", label: "Orders", icon: ShoppingCart },
   { href: "/admin/payouts", label: "Payouts", icon: DollarSign },
+  { href: "/admin/deals", label: "Flash Deals", icon: Zap },
   { href: "/admin/returns", label: "Returns", icon: RotateCcw },
   { href: "/admin/revenue", label: "Revenue", icon: BarChart3 },
   { href: "/admin/users", label: "Users & Roles", icon: Users },

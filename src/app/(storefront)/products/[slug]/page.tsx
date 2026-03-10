@@ -328,7 +328,7 @@ export default function ProductDetailPage() {
           <div className="grid grid-cols-3 gap-4 p-4 bg-warm-100 rounded-xl">
             <div className="text-center">
               <Truck size={20} className="mx-auto text-accent mb-1" />
-              <p className="text-[11px] font-medium text-gray-600">Free Shipping 50+</p>
+              <p className="text-[11px] font-medium text-gray-600">Tracked Shipping</p>
             </div>
             <div className="text-center">
               <Shield size={20} className="mx-auto text-accent mb-1" />

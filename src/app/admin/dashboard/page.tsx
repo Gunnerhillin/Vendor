@@ -202,13 +202,14 @@ export default function AdminDashboard() {
         </div>
         <div className="divide-y divide-warm-border">
           {[
-            { done: false, label: "Configure EasyPost API key", detail: "Add EASYPOST_API_KEY to .env.local (get from easypost.com dashboard). Checkout will use fallback rates until configured." },
             { done: false, label: "Set up Stripe webhook secret", detail: "STRIPE_WEBHOOK_SECRET is still a placeholder. Create a webhook endpoint in Stripe Dashboard pointing to /api/webhooks/stripe." },
-            { done: false, label: "Update warehouse/from address", detail: "src/lib/easypost.ts has DEFAULT_FROM_ADDRESS set to placeholder '123 Commerce St'. Update with your real fulfillment address." },
             { done: false, label: "Onboard first 3-5 vendors", detail: "Homepage shows placeholder products until real vendors list items. Recruit founding vendors to fill Trending & New Arrivals." },
             { done: false, label: "Replace placeholder products on homepage", detail: "page.tsx has PLACEHOLDER_PRODUCTS array — these auto-hide once real approved products exist in the database." },
             { done: false, label: "Feature a real vendor in Spotlight", detail: "VendorSpotlight shows 'Your Brand Here' placeholder. Approve a vendor and mark them as featured to replace it." },
-            { done: false, label: "Update trust bar claims", detail: "Homepage trust bar says 'Free Shipping over $50' and '30-day returns'. Confirm these match your actual policies." },
+            { done: true, label: "Update trust bar & shipping claims", detail: "Trust badges now say 'Tracked Shipping' and 'Hassle-Free Returns'. Vendors handle their own shipping; platform doesn't charge shipping." },
+            { done: true, label: "Build Flash Deals system", detail: "Vendors can create 3-6 day flash deals (5-80% off). Admin approval required. Product pricing auto-updates on approval." },
+            { done: true, label: "Build Returns system", detail: "Customers request returns, vendors review, admin can override. Site-wide returnable condition policy." },
+            { done: false, label: "Run database migrations", detail: "Run 005_shipping_returns.sql and 006_flash_deals.sql in Supabase SQL editor to enable shipping, returns, and deals features." },
             { done: false, label: "Wire up newsletter signup", detail: "Footer email form is visual only. Connect to Mailchimp, ConvertKit, or a Supabase table to capture leads." },
             { done: false, label: "Wire up Contact form", detail: "Contact page (/contact) has a form but submissions aren't emailed yet. Create /api/contact route or connect to support tool." },
             { done: false, label: "Add real OG image for social sharing", detail: "A generated placeholder OG image is at /public/og-image.png. Replace with a branded image (1200x630px)." },

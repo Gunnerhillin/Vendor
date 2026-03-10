@@ -178,8 +178,8 @@ export default function HomePage() {
                     <Truck size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-primary">Free Shipping</p>
-                    <p className="text-[11px] text-gray-400">On orders over $50</p>
+                    <p className="text-sm font-semibold text-primary">Tracked Shipping</p>
+                    <p className="text-[11px] text-gray-400">On every order</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 justify-center">
@@ -187,8 +187,8 @@ export default function HomePage() {
                     <RefreshCw size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-primary">Easy Returns</p>
-                    <p className="text-[11px] text-gray-400">30-day return policy</p>
+                    <p className="text-sm font-semibold text-primary">Hassle-Free Returns</p>
+                    <p className="text-[11px] text-gray-400">Returnable condition policy</p>
                   </div>
                 </div>
                 <div className="flex items-center gap-3 justify-center">
@@ -196,8 +196,8 @@ export default function HomePage() {
                     <Heart size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-primary">Support Indie</p>
-                    <p className="text-[11px] text-gray-400">25% back to creators</p>
+                    <p className="text-sm font-semibold text-primary">Shop Independent</p>
+                    <p className="text-[11px] text-gray-400">Support small businesses</p>
                   </div>
                 </div>
               </div>
@@ -326,7 +326,7 @@ export default function HomePage() {
                     <span className="text-3xl">2</span>
                   </div>
                   <h3 className="font-display text-lg font-semibold mb-2">Shop with Confidence</h3>
-                  <p className="text-sm text-gray-500 leading-relaxed">Secure checkout, free shipping over $50, and easy 30-day returns.</p>
+                  <p className="text-sm text-gray-500 leading-relaxed">Secure checkout, tracked shipping from every vendor, and hassle-free returns.</p>
                 </div>
               </RevealSection>
               <RevealSection delay="delay-300">

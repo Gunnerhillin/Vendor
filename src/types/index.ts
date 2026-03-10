@@ -197,14 +197,24 @@ export interface WishlistItem {
   created_at: string
 }
 
+export type DealStatus = 'pending' | 'approved' | 'rejected' | 'expired'
+
 export interface Deal {
   id: string
   product_id: string
   product?: Product
+  vendor_id: string
+  vendor?: Vendor
   discount_percent: number
+  sale_price: number | null
   starts_at: string
   ends_at: string
   is_active: boolean
+  status: DealStatus
+  admin_notes: string | null
+  approved_by: string | null
+  approved_at: string | null
+  created_at: string
 }
 
 export interface CartItem {

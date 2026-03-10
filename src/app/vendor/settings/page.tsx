@@ -395,7 +395,7 @@ function VendorSettingsContent() {
         <div className="space-y-5">
           <div className="bg-warm-100 rounded-lg p-4 text-sm">
             <p className="font-medium text-gray-700 mb-1">Site-Wide Return Policy</p>
-            <p className="text-xs text-gray-500">Vender has a standard 30-day return policy for items in original condition. You can add your own additional policy below. Customer service may override return decisions if a customer reaches out directly.</p>
+            <p className="text-xs text-gray-500">Vender has a site-wide return policy: items in returnable condition can be returned. You can add your own additional policy below. Customer service may override return decisions if a customer reaches out directly.</p>
           </div>
 
           <div>

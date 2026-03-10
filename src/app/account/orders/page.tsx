@@ -284,7 +284,7 @@ export default function AccountOrdersPage() {
 
                   <div className="bg-warm-100 rounded-lg p-3 text-xs text-gray-500">
                     <p className="font-medium text-gray-600 mb-1">Return Policy</p>
-                    <p>Items must be in original, unused condition. Returns are processed within 30 days of delivery. You&apos;ll receive an email with return instructions once approved.</p>
+                    <p>Items must be in returnable condition. You&apos;ll receive an email with return instructions once your request is approved.</p>
                   </div>
 
                   <div className="flex gap-3 pt-2">

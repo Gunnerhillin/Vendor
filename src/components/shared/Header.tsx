@@ -100,7 +100,7 @@ export default function Header() {
     <>
       {/* Top Banner */}
       <div className="bg-primary text-white text-center py-2 px-4 text-xs font-medium tracking-wide">
-        Free shipping on orders over $50 — <span className="text-accent">Today&apos;s deals end soon!</span>
+        Curated deals from independent brands — <span className="text-accent">New drops daily!</span>
       </div>
 
       {/* Main Header */}
