@@ -1,7 +1,8 @@
 "use client"
 
 import { useEffect, useState, useRef } from "react"
-import { Upload, CreditCard, Check, ExternalLink } from "lucide-react"
+import { useSearchParams } from "next/navigation"
+import { Upload, CreditCard, Check, ExternalLink, AlertCircle } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function VendorSettingsPage() {
@@ -19,6 +20,18 @@ export default function VendorSettingsPage() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
   const [stripeConnecting, setStripeConnecting] = useState(false)
+  const [stripeMessage, setStripeMessage] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
+  const searchParams = useSearchParams()
+
+  useEffect(() => {
+    // Handle Stripe Connect return
+    const stripeParam = searchParams.get('stripe')
+    if (stripeParam === 'complete') {
+      setStripeMessage({ type: 'success', text: 'Stripe account connected successfully! You can now receive payouts.' })
+    } else if (stripeParam === 'refresh') {
+      setStripeMessage({ type: 'info', text: 'Stripe setup was interrupted. Click "Connect Stripe Account" to continue.' })
+    }
+  }, [searchParams])
 
   useEffect(() => {
     async function fetchVendor() {
@@ -38,6 +51,12 @@ export default function VendorSettingsPage() {
         setDescription(v.description || "")
         setLogoUrl(v.logo_url)
         setBannerUrl(v.banner_url)
+
+        // If stripe param is 'complete' and we have a stripe_account_id, mark onboarding done
+        if (searchParams.get('stripe') === 'complete' && v.stripe_account_id && !v.stripe_onboarding_complete) {
+          await supabase.from("vendors").update({ stripe_onboarding_complete: true }).eq("id", v.id)
+          v.stripe_onboarding_complete = true
+        }
       }
       setLoading(false)
     }
@@ -159,6 +178,12 @@ export default function VendorSettingsPage() {
           <CreditCard size={20} />
           Payment Settings
         </h2>
+        {stripeMessage && (
+          <div className={`rounded-lg p-4 mb-4 text-sm flex items-start gap-2 ${stripeMessage.type === 'success' ? 'bg-green-50 text-green-700 border border-green-200' : 'bg-amber-50 text-amber-700 border border-amber-200'}`}>
+            {stripeMessage.type === 'success' ? <Check size={16} className="mt-0.5 flex-shrink-0" /> : <AlertCircle size={16} className="mt-0.5 flex-shrink-0" />}
+            {stripeMessage.text}
+          </div>
+        )}
         <div className="bg-warm-100 rounded-lg p-6">
           <h3 className="font-medium mb-2">Stripe Connect</h3>
           {vendor?.stripe_onboarding_complete ? (

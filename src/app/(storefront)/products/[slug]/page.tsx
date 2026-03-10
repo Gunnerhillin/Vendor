@@ -9,6 +9,7 @@ import { createClient } from '@/lib/supabase/client'
 import { useCart } from '@/hooks/use-cart'
 import { formatPrice, calculateDiscount, formatDate } from '@/lib/utils'
 import ProductCard from '@/components/storefront/ProductCard'
+import ShareButtons from '@/components/storefront/ShareButtons'
 import type { Product, ProductVariant, Review } from '@/types'
 
 export default function ProductDetailPage() {
@@ -335,6 +336,15 @@ export default function ProductDetailPage() {
               <RotateCcw size={20} className="mx-auto text-accent mb-1" />
               <p className="text-[11px] font-medium text-gray-600">Easy Returns</p>
             </div>
+          </div>
+
+          {/* Share */}
+          <div className="mt-6 pt-6 border-t border-warm-border">
+            <ShareButtons
+              url={typeof window !== 'undefined' ? window.location.href : `https://vendor-uiu3.vercel.app/products/${slug}`}
+              title={product.title}
+              description={product.description?.slice(0, 150)}
+            />
           </div>
         </div>
       </div>

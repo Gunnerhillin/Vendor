@@ -47,6 +47,13 @@ export default function RegisterPage() {
         role: "customer",
       })
 
+      // Send welcome email (fire-and-forget)
+      fetch("/api/email/welcome", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, name: fullName }),
+      }).catch(() => {})
+
       if (data.session) {
         window.location.href = "/"
         return

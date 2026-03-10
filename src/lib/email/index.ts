@@ -236,3 +236,48 @@ export function newsletterWelcomeEmail(email: string) {
     </div>
   `)
 }
+
+export function welcomeEmail(data: { name: string }) {
+  return emailWrapper(`
+    <h1>Welcome to Vender!</h1>
+    <p>Hi ${data.name},</p>
+    <p>Thanks for creating your account! You're now part of a community that supports independent brands and creators.</p>
+    <p>Here's what you can do:</p>
+    <div style="background: #F7F2ED; border-radius: 8px; padding: 16px; margin: 16px 0;">
+      <p style="margin: 0 0 8px;"><strong>🛍️ Shop curated products</strong> from independent vendors</p>
+      <p style="margin: 0 0 8px;"><strong>❤️ Save your favorites</strong> to your wishlist</p>
+      <p style="margin: 0;"><strong>⭐ Leave reviews</strong> to help other shoppers</p>
+    </div>
+    <div style="text-align: center; margin-top: 24px;">
+      <a href="${SITE_URL}" class="btn">Start Shopping</a>
+    </div>
+  `)
+}
+
+export function reviewRequestEmail(data: {
+  customerName: string
+  orderId: string
+  items: { title: string; slug: string }[]
+}) {
+  const itemLinks = data.items.slice(0, 3).map(item => `
+    <div style="padding: 12px 0; border-bottom: 1px solid #f0ebe6;">
+      <a href="${SITE_URL}/products/${item.slug}" style="color: #2D2926; font-weight: 500; text-decoration: none;">${item.title}</a>
+      <br/>
+      <a href="${SITE_URL}/products/${item.slug}" style="color: #C4956A; font-size: 13px; text-decoration: none;">Leave a review →</a>
+    </div>
+  `).join('')
+
+  return emailWrapper(`
+    <h1>How was your order?</h1>
+    <p>Hi ${data.customerName || 'there'},</p>
+    <p>We hope you're enjoying your recent purchase! Your feedback helps other shoppers and supports the indie brands you love.</p>
+    <p style="color: #6B6560; font-size: 14px;">Order #${data.orderId.slice(0, 8)}</p>
+    <div class="divider"></div>
+    ${itemLinks}
+    <div class="divider"></div>
+    <p style="font-size: 13px; color: #6B6560;">Reviews take less than a minute and make a big difference for small businesses.</p>
+    <div style="text-align: center; margin-top: 24px;">
+      <a href="${SITE_URL}/account/orders" class="btn">Review Your Order</a>
+    </div>
+  `)
+}

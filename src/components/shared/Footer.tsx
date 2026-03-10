@@ -110,6 +110,7 @@ export default function Footer() {
               <Link href="/contact" className="block text-sm hover:text-accent-light transition-colors">Contact</Link>
               <Link href="/privacy" className="block text-sm hover:text-accent-light transition-colors">Privacy Policy</Link>
               <Link href="/terms" className="block text-sm hover:text-accent-light transition-colors">Terms of Service</Link>
+              <Link href="/refund-policy" className="block text-sm hover:text-accent-light transition-colors">Refund Policy</Link>
             </nav>
           </div>
         </div>
