@@ -15,6 +15,7 @@ export default function VendorDashboard() {
   const [pendingProducts, setPendingProducts] = useState(0)
   const [recentOrders, setRecentOrders] = useState<any[]>([])
   const [vendorName, setVendorName] = useState("")
+  const [nextPayout, setNextPayout] = useState(0)
 
   useEffect(() => {
     async function fetchDashboard() {
@@ -55,6 +56,16 @@ export default function VendorDashboard() {
         setRecentOrders(orderItems)
       }
 
+      // Pending payout
+      const { data: pendingPayouts } = await supabase
+        .from("payouts")
+        .select("amount")
+        .eq("vendor_id", vendor.id)
+        .eq("status", "pending")
+
+      const pendingTotal = pendingPayouts?.reduce((sum, p) => sum + Number(p.amount), 0) || 0
+      setNextPayout(pendingTotal)
+
       setLoading(false)
     }
     fetchDashboard()
@@ -64,7 +75,7 @@ export default function VendorDashboard() {
     { label: "Total Revenue", value: formatPrice(totalRevenue), change: vendorName ? "From all sales" : "No data yet", up: true, icon: DollarSign },
     { label: "Orders", value: String(totalOrders), change: totalOrders > 0 ? `${totalOrders} total` : "No orders yet", up: true, icon: ShoppingCart },
     { label: "Active Products", value: String(activeProducts), change: pendingProducts > 0 ? `${pendingProducts} pending` : "All approved", up: true, icon: Package },
-    { label: "Next Payout", value: "$0", change: "No payouts yet", up: true, icon: TrendingUp },
+    { label: "Next Payout", value: formatPrice(nextPayout), change: nextPayout > 0 ? "Pending transfer" : "No payouts yet", up: nextPayout > 0, icon: TrendingUp },
   ]
 
   if (loading) {

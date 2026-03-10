@@ -90,6 +90,9 @@ export default function AdminVendorsPage() {
     const updates: any = { status: newStatus }
     if (newStatus === "approved") updates.approved_at = new Date().toISOString()
 
+    // If approving, also update the user's role to 'vendor'
+    const vendor = vendors.find(v => v.id === vendorId)
+
     const { error } = await supabase
       .from("vendors")
       .update(updates)
@@ -97,6 +100,20 @@ export default function AdminVendorsPage() {
 
     if (!error) {
       setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, ...updates } : v))
+
+      // Update user role if approving
+      if (newStatus === "approved" && vendor?.user_id) {
+        await supabase.from("profiles").update({ role: "vendor" }).eq("id", vendor.user_id)
+      }
+
+      // Send email notification for approval/rejection
+      if (newStatus === "approved" || newStatus === "rejected") {
+        fetch('/api/email/vendor-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ vendorId, type: newStatus }),
+        }).catch(err => console.error('Vendor notification failed:', err))
+      }
     }
   }
 

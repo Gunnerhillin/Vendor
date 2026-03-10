@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe'
+import { DEFAULT_COMMISSION_RATE } from '@/lib/constants'
 import type { CartItem, ShippingAddress } from '@/types'
 
 export async function POST(request: NextRequest) {
@@ -19,18 +20,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
     }
 
-    // Calculate totals and prepare order items
+    // Calculate totals and prepare order items, grouped by vendor
     let subtotal = 0
     const orderItems: any[] = []
+    const vendorTotals: Record<string, { amount: number; stripeAccountId: string | null; commissionRate: number }> = {}
 
     for (const item of items) {
+      // Fetch product with vendor info (including stripe account)
       const { data: product } = await supabase
         .from('products')
-        .select('id, price, vendor_id, title')
+        .select('id, price, vendor_id, title, inventory_count')
         .eq('id', item.product.id)
         .single()
 
       if (!product) continue
+
+      // Check inventory
+      if (product.inventory_count < item.quantity) {
+        return NextResponse.json(
+          { error: `"${product.title}" only has ${product.inventory_count} in stock` },
+          { status: 400 }
+        )
+      }
+
+      // Fetch vendor's stripe account and commission rate
+      const { data: vendor } = await supabase
+        .from('vendors')
+        .select('id, stripe_account_id, commission_rate')
+        .eq('id', product.vendor_id)
+        .single()
 
       const price = product.price + (item.variant?.price_adjustment || 0)
       const itemTotal = price * item.quantity
@@ -44,20 +62,48 @@ export async function POST(request: NextRequest) {
         unit_price: price,
         status: 'pending',
       })
+
+      // Accumulate vendor totals for transfers
+      if (vendor) {
+        if (!vendorTotals[vendor.id]) {
+          vendorTotals[vendor.id] = {
+            amount: 0,
+            stripeAccountId: vendor.stripe_account_id,
+            commissionRate: vendor.commission_rate || DEFAULT_COMMISSION_RATE,
+          }
+        }
+        vendorTotals[vendor.id].amount += itemTotal
+      }
     }
 
     // Calculate taxes and shipping
-    const tax = Math.round(subtotal * 0.08 * 100) / 100 // 8% tax
+    const tax = Math.round(subtotal * 0.08 * 100) / 100
     const shipping = subtotal >= 50 ? 0 : 5.99
     const total = Math.round((subtotal + tax + shipping) * 100) / 100
 
-    // Create Stripe Payment Intent (platform-level)
+    // Build transfer metadata for each vendor (used after payment succeeds)
+    const transferGroup = `order_${Date.now()}`
+    const vendorTransfers = Object.entries(vendorTotals).map(([vendorId, info]) => {
+      const vendorRevenue = info.amount * (1 - info.commissionRate)
+      return {
+        vendor_id: vendorId,
+        stripe_account_id: info.stripeAccountId,
+        gross_amount: info.amount,
+        commission: info.amount * info.commissionRate,
+        vendor_payout: Math.round(vendorRevenue * 100) / 100,
+      }
+    })
+
+    // Create Stripe Payment Intent
     const paymentIntent = await stripe.paymentIntents.create({
       amount: Math.round(total * 100), // cents
       currency: 'usd',
       metadata: {
         customer_id: user.id,
+        transfer_group: transferGroup,
+        vendor_transfers: JSON.stringify(vendorTransfers),
       },
+      transfer_group: transferGroup,
       automatic_payment_methods: { enabled: true },
     })
 

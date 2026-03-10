@@ -3,8 +3,24 @@
 import { useEffect, useState } from "react"
 import { createClient } from "@/lib/supabase/client"
 import { formatPrice, formatDate } from "@/lib/utils"
-import { Package } from "lucide-react"
+import { Package, Truck, MapPin } from "lucide-react"
 import Link from "next/link"
+
+const statusColors: Record<string, string> = {
+  delivered: "badge-success",
+  shipped: "badge-success",
+  processing: "badge-warning",
+  pending: "badge-info",
+  cancelled: "bg-red-100 text-red-700",
+  refunded: "bg-red-100 text-red-700",
+}
+
+const carrierTrackingUrls: Record<string, string> = {
+  usps: 'https://tools.usps.com/go/TrackConfirmAction?tLabels=',
+  ups: 'https://www.ups.com/track?tracknum=',
+  fedex: 'https://www.fedex.com/fedextrack/?trknbr=',
+  dhl: 'https://www.dhl.com/us-en/home/tracking.html?tracking-id=',
+}
 
 export default function AccountOrdersPage() {
   const supabase = createClient()
@@ -49,41 +65,91 @@ export default function AccountOrdersPage() {
       ) : (
         <div className="space-y-4">
           {orders.map((order) => (
-            <div key={order.id} className="card p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <p className="text-sm font-semibold">Order #{order.id.slice(0, 8)}</p>
-                  <p className="text-xs text-gray-400">{formatDate(order.created_at)}</p>
+            <div key={order.id} className="card overflow-hidden">
+              {/* Order Header */}
+              <div className="flex items-center justify-between p-6 bg-warm-100/50 border-b border-warm-border">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">Order Placed</p>
+                    <p className="text-sm font-medium">{formatDate(order.created_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">Total</p>
+                    <p className="text-sm font-bold">{formatPrice(order.total)}</p>
+                  </div>
                 </div>
                 <div className="text-right">
-                  <span className={`badge ${
-                    order.status === "delivered" ? "badge-success" :
-                    order.status === "shipped" ? "badge-success" :
-                    order.status === "processing" ? "badge-warning" :
-                    order.status === "cancelled" ? "bg-red-100 text-red-700" :
-                    "badge-info"
-                  }`}>
+                  <span className={`badge capitalize ${statusColors[order.status] || "badge-info"}`}>
                     {order.status}
                   </span>
-                  <p className="text-sm font-bold mt-1">{formatPrice(order.total)}</p>
+                  <p className="text-xs text-gray-400 mt-1">#{order.id.slice(0, 8)}</p>
                 </div>
               </div>
-              <div className="space-y-3">
+
+              {/* Order Items */}
+              <div className="p-6 space-y-4">
                 {order.items?.map((item: any) => (
-                  <div key={item.id} className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-lg bg-warm-100 overflow-hidden flex-shrink-0">
+                  <div key={item.id} className="flex items-start gap-4">
+                    <div className="w-16 h-16 rounded-lg bg-warm-100 overflow-hidden flex-shrink-0">
                       {item.product?.images?.[0]?.url ? (
                         <img src={item.product.images[0].url} alt="" className="w-full h-full object-cover" />
-                      ) : <div className="w-full h-full flex items-center justify-center">🛍️</div>}
+                      ) : <div className="w-full h-full flex items-center justify-center text-xl">🛍️</div>}
                     </div>
-                    <div className="flex-1">
-                      <Link href={`/products/${item.product?.slug || ''}`} className="text-sm font-medium hover:text-accent">{item.product?.title || "Product"}</Link>
-                      <p className="text-xs text-gray-400">by {item.vendor?.business_name || "—"} • Qty: {item.quantity}</p>
+                    <div className="flex-1 min-w-0">
+                      <Link href={`/products/${item.product?.slug || ''}`} className="text-sm font-medium hover:text-accent block">
+                        {item.product?.title || "Product"}
+                      </Link>
+                      <p className="text-xs text-gray-400">by {item.vendor?.business_name || "—"} &middot; Qty: {item.quantity}</p>
+
+                      {/* Tracking info */}
+                      {item.tracking_number && (
+                        <div className="flex items-center gap-2 mt-2 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                          <Truck size={14} className="text-green-600 flex-shrink-0" />
+                          <div className="min-w-0">
+                            <p className="text-xs font-medium text-green-800">
+                              {item.shipping_carrier?.toUpperCase() || 'Tracking'}:
+                              {carrierTrackingUrls[item.shipping_carrier] ? (
+                                <a
+                                  href={`${carrierTrackingUrls[item.shipping_carrier]}${item.tracking_number}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="ml-1 font-mono underline"
+                                >
+                                  {item.tracking_number}
+                                </a>
+                              ) : (
+                                <span className="ml-1 font-mono">{item.tracking_number}</span>
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Item status if different from order */}
+                      {item.status !== order.status && (
+                        <span className={`badge capitalize mt-2 text-[10px] ${statusColors[item.status] || ""}`}>
+                          {item.status}
+                        </span>
+                      )}
                     </div>
-                    <span className="text-sm font-medium">{formatPrice(item.unit_price * item.quantity)}</span>
+                    <span className="text-sm font-medium whitespace-nowrap">{formatPrice(item.unit_price * item.quantity)}</span>
                   </div>
                 ))}
               </div>
+
+              {/* Shipping Address */}
+              {order.shipping_name && (
+                <div className="px-6 pb-4">
+                  <div className="flex items-start gap-2 text-xs text-gray-400">
+                    <MapPin size={12} className="flex-shrink-0 mt-0.5" />
+                    <span>
+                      {order.shipping_name}, {order.shipping_line1}
+                      {order.shipping_line2 ? `, ${order.shipping_line2}` : ''},
+                      {' '}{order.shipping_city}, {order.shipping_state} {order.shipping_postal_code}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>

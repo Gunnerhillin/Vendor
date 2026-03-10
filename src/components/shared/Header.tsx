@@ -144,7 +144,7 @@ export default function Header() {
               <Search size={22} />
             </button>
 
-            <Link href="/vendor/apply" className="hidden lg:block text-sm font-medium hover:text-accent transition-colors">
+            <Link href="/marketing/vendor-landing-page.html" className="hidden lg:block text-sm font-semibold text-accent-dark hover:text-accent transition-all duration-300">
               Sell on Vender
             </Link>
 
@@ -333,7 +333,7 @@ export default function Header() {
                 </Link>
               ))}
               <div className="border-t border-warm-border my-4" />
-              <Link href="/vendor/apply" className="block py-3 px-4 rounded-lg text-sm font-medium text-accent-dark hover:bg-warm-100">
+              <Link href="/marketing/vendor-landing-page.html" className="block py-3 px-4 rounded-lg text-sm font-medium text-accent-dark hover:bg-warm-100">
                 Sell on Vender
               </Link>
               {user ? (
