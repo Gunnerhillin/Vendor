@@ -1,11 +1,23 @@
 "use client"
 
-import { useEffect, useState, useRef } from "react"
+import { Suspense, useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Upload, CreditCard, Check, ExternalLink, AlertCircle, MapPin } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function VendorSettingsPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-3xl flex items-center justify-center py-20">
+        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin" />
+      </div>
+    }>
+      <VendorSettingsContent />
+    </Suspense>
+  )
+}
+
+function VendorSettingsContent() {
   const supabase = createClient()
   const logoInputRef = useRef<HTMLInputElement>(null)
   const bannerInputRef = useRef<HTMLInputElement>(null)
