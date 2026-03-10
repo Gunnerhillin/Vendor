@@ -76,9 +76,13 @@ export default function Footer() {
             <Link href="/" className="font-display text-2xl font-bold text-white mb-4 block">
               V<span className="text-accent">ender</span>
             </Link>
-            <p className="text-sm leading-relaxed max-w-xs">
-              Curated deals from independent brands. New drops every day at prices you&apos;ll love.
+            <p className="text-sm leading-relaxed max-w-xs mb-3">
+              Curated deals from independent brands. Founded in Saint George, Utah.
             </p>
+            <Link href="/local" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-400/30 text-emerald-300 text-xs font-semibold hover:bg-emerald-500/30 transition-colors">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path><circle cx="12" cy="10" r="3"></circle></svg>
+              Shop Local
+            </Link>
           </div>
 
           {/* Shop */}
@@ -88,6 +92,7 @@ export default function Footer() {
               <Link href="/" className="block text-sm hover:text-accent-light transition-colors">Today&apos;s Deals</Link>
               <Link href="/search?sort=newest" className="block text-sm hover:text-accent-light transition-colors">New Arrivals</Link>
               <Link href="/search?sort=popular" className="block text-sm hover:text-accent-light transition-colors">Best Sellers</Link>
+              <Link href="/local" className="block text-sm hover:text-accent-light transition-colors">Shop Local</Link>
               <Link href="/category/clothing" className="block text-sm hover:text-accent-light transition-colors">Categories</Link>
             </nav>
           </div>
@@ -117,7 +122,7 @@ export default function Footer() {
 
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
           <span>&copy; {new Date().getFullYear()} Vender. All rights reserved.</span>
-          <span>Made with care for independent brands.</span>
+          <span>Made with care in Saint George, Utah.</span>
         </div>
       </div>
     </footer>

@@ -31,6 +31,12 @@ export interface Vendor {
   total_sales: number
   total_revenue: number
   product_count: number
+  city: string | null
+  state: string | null
+  is_local: boolean
+  offers_local_pickup: boolean
+  pickup_address: string | null
+  pickup_instructions: string | null
 }
 
 export interface Category {

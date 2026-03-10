@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useParams } from 'next/navigation'
+import { MapPin } from 'lucide-react'
 import ProductCard from '@/components/storefront/ProductCard'
 import { createClient } from '@/lib/supabase/client'
 import type { Product, Vendor } from '@/types'
@@ -74,10 +75,40 @@ export default function VendorStorefrontPage() {
           </div>
           <h1 className="font-display text-3xl md:text-4xl font-semibold mb-2">{vendor.business_name}</h1>
           {vendor.description && <p className="text-gray-600 max-w-md mx-auto text-sm mb-4">{vendor.description}</p>}
-          <div className="flex items-center justify-center gap-6 text-sm text-gray-500">
+          <div className="flex items-center justify-center gap-4 flex-wrap text-sm text-gray-500">
             <span>{products.length} products</span>
             <span>{vendor.total_sales} sales</span>
+            {(vendor.city || vendor.state) && (
+              <span className="inline-flex items-center gap-1 text-gray-600">
+                <MapPin size={14} className="text-gray-400" />
+                {[vendor.city, vendor.state].filter(Boolean).join(', ')}
+              </span>
+            )}
           </div>
+          {/* Local badges */}
+          {(vendor.is_local || vendor.offers_local_pickup) && (
+            <div className="flex items-center justify-center gap-2 mt-4">
+              {vendor.is_local && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
+                  <MapPin size={14} className="text-emerald-600" />
+                  Shop Local Vendor
+                </span>
+              )}
+              {vendor.offers_local_pickup && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                  <MapPin size={14} className="text-blue-600" />
+                  Local Pickup Available
+                </span>
+              )}
+            </div>
+          )}
+          {/* Pickup info */}
+          {vendor.offers_local_pickup && vendor.pickup_instructions && (
+            <div className="mt-4 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-3 max-w-md mx-auto text-left">
+              <p className="text-xs font-semibold text-gray-700 mb-1">Pickup Info</p>
+              <p className="text-xs text-gray-500">{vendor.pickup_instructions}</p>
+            </div>
+          )}
         </div>
       </div>
 

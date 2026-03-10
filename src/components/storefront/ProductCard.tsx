@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { Heart, Eye } from 'lucide-react'
+import { MapPin } from 'lucide-react'
 import { formatPrice, calculateDiscount } from '@/lib/utils'
 import { useQuickView } from '@/hooks/use-quick-view'
 import type { Product } from '@/types'
@@ -70,9 +71,16 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Info */}
       <div className="p-4">
         {product.vendor && (
-          <p className="text-[11px] font-semibold text-accent-dark uppercase tracking-wide mb-1">
-            {product.vendor.business_name}
-          </p>
+          <div className="flex items-center gap-1.5 mb-1">
+            <p className="text-[11px] font-semibold text-accent-dark uppercase tracking-wide">
+              {product.vendor.business_name}
+            </p>
+            {product.vendor.is_local && (
+              <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 text-[9px] font-bold border border-emerald-200">
+                <MapPin size={9} /> Local
+              </span>
+            )}
+          </div>
         )}
         <h3 className="text-sm font-medium text-primary leading-snug line-clamp-2 mb-2 transition-colors duration-300 group-hover:text-accent-dark">
           {product.title}

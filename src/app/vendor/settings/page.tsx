@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
-import { Upload, CreditCard, Check, ExternalLink, AlertCircle } from "lucide-react"
+import { Upload, CreditCard, Check, ExternalLink, AlertCircle, MapPin } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function VendorSettingsPage() {
@@ -19,6 +19,11 @@ export default function VendorSettingsPage() {
   const [description, setDescription] = useState("")
   const [logoUrl, setLogoUrl] = useState<string | null>(null)
   const [bannerUrl, setBannerUrl] = useState<string | null>(null)
+  const [city, setCity] = useState("")
+  const [state, setState] = useState("")
+  const [offersPickup, setOffersPickup] = useState(false)
+  const [pickupAddress, setPickupAddress] = useState("")
+  const [pickupInstructions, setPickupInstructions] = useState("")
   const [stripeConnecting, setStripeConnecting] = useState(false)
   const [stripeMessage, setStripeMessage] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
   const searchParams = useSearchParams()
@@ -51,6 +56,11 @@ export default function VendorSettingsPage() {
         setDescription(v.description || "")
         setLogoUrl(v.logo_url)
         setBannerUrl(v.banner_url)
+        setCity(v.city || "")
+        setState(v.state || "")
+        setOffersPickup(v.offers_local_pickup || false)
+        setPickupAddress(v.pickup_address || "")
+        setPickupInstructions(v.pickup_instructions || "")
 
         // If stripe param is 'complete' and we have a stripe_account_id, mark onboarding done
         if (searchParams.get('stripe') === 'complete' && v.stripe_account_id && !v.stripe_onboarding_complete) {
@@ -86,6 +96,8 @@ export default function VendorSettingsPage() {
     setSaving(true)
     setSaved(false)
 
+    const isLocal = city.toLowerCase().includes("saint george") || city.toLowerCase().includes("st. george") || city.toLowerCase().includes("st george")
+
     const { error } = await supabase
       .from("vendors")
       .update({
@@ -94,6 +106,12 @@ export default function VendorSettingsPage() {
         description: description.trim(),
         logo_url: logoUrl,
         banner_url: bannerUrl,
+        city: city.trim() || null,
+        state: state || null,
+        is_local: isLocal,
+        offers_local_pickup: offersPickup,
+        pickup_address: pickupAddress.trim() || null,
+        pickup_instructions: pickupInstructions.trim() || null,
       })
       .eq("id", vendor.id)
 
@@ -197,6 +215,73 @@ export default function VendorSettingsPage() {
                 {stripeConnecting ? "Connecting..." : <><ExternalLink size={14} /> Connect Stripe Account</>}
               </button>
             </>
+          )}
+        </div>
+      </div>
+
+      {/* Location & Local Pickup */}
+      <div className="card p-6 md:p-8 mb-6">
+        <h2 className="font-semibold text-lg mb-6 flex items-center gap-2">
+          <MapPin size={20} />
+          Location & Local Pickup
+        </h2>
+        <div className="space-y-5">
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">City</label>
+              <input type="text" value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g., Saint George" className="input" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">State</label>
+              <select value={state} onChange={(e) => setState(e.target.value)} className="input">
+                <option value="">Select state</option>
+                <option value="UT">Utah</option>
+                <option value="AZ">Arizona</option>
+                <option value="NV">Nevada</option>
+                <option value="CA">California</option>
+                <option value="CO">Colorado</option>
+                <option value="ID">Idaho</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          {(city.toLowerCase().includes("saint george") || city.toLowerCase().includes("st. george") || city.toLowerCase().includes("st george")) && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 flex items-center gap-3">
+              <MapPin size={18} className="text-emerald-600 flex-shrink-0" />
+              <div>
+                <p className="text-sm font-semibold text-emerald-700">Shop Local Badge</p>
+                <p className="text-xs text-emerald-600">You&apos;ll receive a &ldquo;Shop Local&rdquo; badge on your products and store page!</p>
+              </div>
+            </div>
+          )}
+
+          <div className="border-t border-warm-border pt-5">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={offersPickup}
+                onChange={(e) => setOffersPickup(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-accent focus:ring-accent"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-700">Offer Local Pickup</span>
+                <p className="text-xs text-gray-400">Let customers pick up orders from your location</p>
+              </div>
+            </label>
+          </div>
+
+          {offersPickup && (
+            <div className="space-y-4 pl-7">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Address</label>
+                <input type="text" value={pickupAddress} onChange={(e) => setPickupAddress(e.target.value)} placeholder="e.g., 123 Main St, Saint George, UT 84770" className="input" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Pickup Instructions</label>
+                <textarea value={pickupInstructions} onChange={(e) => setPickupInstructions(e.target.value)} placeholder="e.g., Text (435) 555-1234 when you arrive. Available Mon-Fri 10am-6pm." className="input min-h-[80px] resize-y" />
+              </div>
+            </div>
           )}
         </div>
       </div>

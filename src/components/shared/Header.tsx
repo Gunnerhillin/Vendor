@@ -10,6 +10,7 @@ import type { Profile } from '@/types'
 
 const categories = [
   { name: "Today's Deals", href: '/' },
+  { name: 'Shop Local', href: '/local', isLocal: true },
   { name: 'Clothing', href: '/category/clothing' },
   { name: 'Kids & Baby', href: '/category/kids-baby' },
   { name: 'Home Decor', href: '/category/home-decor' },
@@ -289,7 +290,11 @@ export default function Header() {
             <Link
               key={cat.name}
               href={cat.href}
-              className="px-4 md:px-5 py-3.5 text-[11px] md:text-xs font-semibold text-gray-500 uppercase tracking-wider whitespace-nowrap border-b-2 border-transparent hover:text-accent-dark hover:border-accent transition-all"
+              className={`px-4 md:px-5 py-3.5 text-[11px] md:text-xs font-semibold uppercase tracking-wider whitespace-nowrap border-b-2 border-transparent transition-all ${
+                (cat as any).isLocal
+                  ? 'text-emerald-600 hover:text-emerald-700 hover:border-emerald-500'
+                  : 'text-gray-500 hover:text-accent-dark hover:border-accent'
+              }`}
             >
               {cat.name}
             </Link>

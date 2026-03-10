@@ -22,6 +22,8 @@ export default function VendorApplyPage() {
   const [description, setDescription] = useState("")
   const [category, setCategory] = useState("")
   const [website, setWebsite] = useState("")
+  const [city, setCity] = useState("")
+  const [state, setState] = useState("")
 
   // Step 2 fields
   const [images, setImages] = useState<{ file: File; preview: string }[]>([])
@@ -169,6 +171,10 @@ export default function VendorApplyPage() {
           product_count: 0,
           applied_at: new Date().toISOString(),
           sample_images: imageUrls,
+          city: city.trim() || null,
+          state: state || null,
+          is_local: city.toLowerCase().includes("saint george") || city.toLowerCase().includes("st. george") || city.toLowerCase().includes("st george"),
+          offers_local_pickup: false,
         })
 
       if (insertErr) {
@@ -301,6 +307,41 @@ export default function VendorApplyPage() {
                     value={website}
                     onChange={(e) => setWebsite(e.target.value)}
                   />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="label">City</label>
+                  <input
+                    type="text"
+                    placeholder="e.g., Saint George"
+                    className="input"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label className="label">State</label>
+                  <select
+                    className="input"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                  >
+                    <option value="">Select state</option>
+                    <option value="UT">Utah</option>
+                    <option value="AZ">Arizona</option>
+                    <option value="NV">Nevada</option>
+                    <option value="CA">California</option>
+                    <option value="CO">Colorado</option>
+                    <option value="ID">Idaho</option>
+                    <option value="NM">New Mexico</option>
+                    <option value="WY">Wyoming</option>
+                    <option value="OR">Oregon</option>
+                    <option value="WA">Washington</option>
+                    <option value="TX">Texas</option>
+                    <option value="Other">Other</option>
+                  </select>
+                  <p className="text-[10px] text-gray-400 mt-1">Local St. George vendors get a special badge!</p>
                 </div>
               </div>
             </div>
