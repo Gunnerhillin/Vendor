@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCart } from '@/hooks/use-cart'
 import { formatPrice } from '@/lib/utils'
-import { Lock, CreditCard, Check, Truck, Loader2 } from 'lucide-react'
+import { Lock, CreditCard, Check, Truck, Loader2, Tag, X } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 interface ShippingRate {
@@ -38,6 +38,36 @@ export default function CheckoutPage() {
   const [selectedRate, setSelectedRate] = useState<ShippingRate | null>(null)
   const [ratesLoading, setRatesLoading] = useState(false)
   const [shipmentId, setShipmentId] = useState<string | null>(null)
+
+  // Coupon
+  const [couponCode, setCouponCode] = useState('')
+  const [couponLoading, setCouponLoading] = useState(false)
+  const [appliedCoupon, setAppliedCoupon] = useState<{ id: string; code: string; discount: number; description: string } | null>(null)
+  const [couponError, setCouponError] = useState('')
+
+  const handleApplyCoupon = async () => {
+    if (!couponCode.trim()) return
+    setCouponLoading(true)
+    setCouponError('')
+    try {
+      const res = await fetch('/api/coupons/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code: couponCode, subtotal: total }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setCouponError(data.error)
+      } else {
+        setAppliedCoupon(data.coupon)
+        setCouponCode('')
+      }
+    } catch {
+      setCouponError('Failed to validate coupon')
+    } finally {
+      setCouponLoading(false)
+    }
+  }
 
   useEffect(() => {
     async function checkAuth() {
@@ -103,11 +133,13 @@ export default function CheckoutPage() {
   }, [zip, address, city, state, fetchRates])
 
   const subtotal = total()
-  const tax = Math.round(subtotal * 0.08 * 100) / 100
+  const couponDiscount = appliedCoupon?.discount || 0
+  const discountedSubtotal = Math.max(0, subtotal - couponDiscount)
+  const tax = Math.round(discountedSubtotal * 0.08 * 100) / 100
   const shippingCost = selectedRate
     ? (subtotal >= 50 ? 0 : parseFloat(selectedRate.rate))
     : (subtotal >= 50 ? 0 : 5.99)
-  const orderTotal = Math.round((subtotal + tax + shippingCost) * 100) / 100
+  const orderTotal = Math.round((discountedSubtotal + tax + shippingCost) * 100) / 100
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -337,8 +369,49 @@ export default function CheckoutPage() {
                 </div>
               ))}
             </div>
+            {/* Coupon Code */}
+            <div className="border-t border-warm-border pt-4 mb-4">
+              {appliedCoupon ? (
+                <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                  <div className="flex items-center gap-2">
+                    <Tag size={14} className="text-green-600" />
+                    <span className="text-sm font-medium text-green-700">{appliedCoupon.code}</span>
+                    <span className="text-xs text-green-600">({appliedCoupon.description})</span>
+                  </div>
+                  <button onClick={() => setAppliedCoupon(null)} className="text-green-600 hover:text-green-800"><X size={14} /></button>
+                </div>
+              ) : (
+                <div>
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), handleApplyCoupon())}
+                      placeholder="Promo code"
+                      className="input flex-1 text-sm"
+                    />
+                    <button
+                      onClick={handleApplyCoupon}
+                      disabled={couponLoading || !couponCode.trim()}
+                      className="btn-outline text-sm px-4 disabled:opacity-40"
+                    >
+                      {couponLoading ? '...' : 'Apply'}
+                    </button>
+                  </div>
+                  {couponError && <p className="text-xs text-red-500 mt-1">{couponError}</p>}
+                </div>
+              )}
+            </div>
+
             <div className="border-t border-warm-border pt-4 space-y-2 text-sm">
               <div className="flex justify-between"><span className="text-gray-500">Subtotal</span><span>{formatPrice(subtotal)}</span></div>
+              {appliedCoupon && (
+                <div className="flex justify-between text-green-600">
+                  <span>Discount ({appliedCoupon.description})</span>
+                  <span>-{formatPrice(couponDiscount)}</span>
+                </div>
+              )}
               <div className="flex justify-between">
                 <span className="text-gray-500">Shipping</span>
                 <span className={shippingCost === 0 ? 'text-green-600' : ''}>

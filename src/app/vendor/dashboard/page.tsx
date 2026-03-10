@@ -5,6 +5,7 @@ import { TrendingUp, Package, ShoppingCart, DollarSign, ArrowUpRight } from "luc
 import { createClient } from "@/lib/supabase/client"
 import { formatPrice, formatDate } from "@/lib/utils"
 import Link from "next/link"
+import SalesChart from "@/components/vendor/SalesChart"
 
 export default function VendorDashboard() {
   const supabase = createClient()
@@ -14,6 +15,7 @@ export default function VendorDashboard() {
   const [activeProducts, setActiveProducts] = useState(0)
   const [pendingProducts, setPendingProducts] = useState(0)
   const [recentOrders, setRecentOrders] = useState<any[]>([])
+  const [vendorId, setVendorId] = useState("")
   const [vendorName, setVendorName] = useState("")
   const [nextPayout, setNextPayout] = useState(0)
 
@@ -29,6 +31,7 @@ export default function VendorDashboard() {
         .single()
 
       if (!vendor) return
+      setVendorId(vendor.id)
       setVendorName(vendor.business_name)
       setTotalRevenue(vendor.total_revenue || 0)
 
@@ -105,6 +108,13 @@ export default function VendorDashboard() {
           </div>
         ))}
       </div>
+
+      {/* Sales Chart */}
+      {vendorId && (
+        <div className="mb-8">
+          <SalesChart vendorId={vendorId} />
+        </div>
+      )}
 
       {/* Recent Orders */}
       <div className="card">

@@ -10,6 +10,9 @@ import { useCart } from '@/hooks/use-cart'
 import { formatPrice, calculateDiscount, formatDate } from '@/lib/utils'
 import ProductCard from '@/components/storefront/ProductCard'
 import ShareButtons from '@/components/storefront/ShareButtons'
+import RecentlyViewed, { addToRecentlyViewed } from '@/components/storefront/RecentlyViewed'
+import { useToast } from '@/components/shared/Toast'
+import { ProductDetailSkeleton } from '@/components/shared/Skeleton'
 import type { Product, ProductVariant, Review } from '@/types'
 
 export default function ProductDetailPage() {
@@ -18,6 +21,7 @@ export default function ProductDetailPage() {
   const supabase = createClient()
   const addItem = useCart((s) => s.addItem)
   const toggleCart = useCart((s) => s.toggleCart)
+  const { toast } = useToast()
 
   const [product, setProduct] = useState<Product | null>(null)
   const [loading, setLoading] = useState(true)
@@ -64,6 +68,7 @@ export default function ProductDetailPage() {
         if (p.images) p.images.sort((a: any, b: any) => a.sort_order - b.sort_order)
         if (p.variants) p.variants.sort((a: any, b: any) => a.sort_order - b.sort_order)
         setProduct(p)
+        addToRecentlyViewed(p.id)
 
         // Fetch reviews
         const { data: reviewsData } = await supabase
@@ -105,6 +110,7 @@ export default function ProductDetailPage() {
     if (!product) return
     addItem(product, selectedVariant, quantity)
     toggleCart()
+    toast(`${product.title} added to bag`, 'cart')
   }
 
   const handleWishlist = async () => {
@@ -116,6 +122,7 @@ export default function ProductDetailPage() {
     })
     const data = await res.json()
     setWishlisted(data.added)
+    toast(data.added ? 'Added to wishlist' : 'Removed from wishlist', 'wishlist')
   }
 
   const handleReviewSubmit = async (e: React.FormEvent) => {
@@ -154,12 +161,7 @@ export default function ProductDetailPage() {
   const colorVariants = product?.variants?.filter(v => v.type === 'color') || []
 
   if (loading) {
-    return (
-      <div className="section-padding py-20 text-center">
-        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-400">Loading product...</p>
-      </div>
-    )
+    return <ProductDetailSkeleton />
   }
 
   if (!product) {
@@ -192,9 +194,9 @@ export default function ProductDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 mb-16">
         {/* Images */}
         <div>
-          <div className="aspect-square rounded-xl overflow-hidden bg-warm-100 mb-4">
+          <div className="relative aspect-square rounded-xl overflow-hidden bg-warm-100 mb-4">
             {mainImage ? (
-              <img src={mainImage} alt={product.title} className="w-full h-full object-cover" />
+              <Image src={mainImage} alt={product.title} fill sizes="(max-width: 1024px) 100vw, 50vw" className="object-cover" priority />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-6xl">🛍️</div>
             )}
@@ -205,9 +207,9 @@ export default function ProductDetailPage() {
                 <button
                   key={img.id}
                   onClick={() => setSelectedImage(i)}
-                  className={`aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === i ? 'border-accent' : 'border-transparent hover:border-warm-300'}`}
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${selectedImage === i ? 'border-accent' : 'border-transparent hover:border-warm-300'}`}
                 >
-                  <img src={img.url} alt={img.alt || ''} className="w-full h-full object-cover" />
+                  <Image src={img.url} alt={img.alt || ''} fill sizes="12vw" className="object-cover" />
                 </button>
               ))}
             </div>
@@ -416,7 +418,7 @@ export default function ProductDetailPage() {
 
       {/* Related Products */}
       {related.length > 0 && (
-        <div>
+        <div className="mb-16">
           <h2 className="font-display text-xl font-bold mb-6">You Might Also Like</h2>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
             {related.map((p) => (
@@ -425,6 +427,9 @@ export default function ProductDetailPage() {
           </div>
         </div>
       )}
+
+      {/* Recently Viewed */}
+      <RecentlyViewed excludeId={product.id} />
     </div>
   )
 }

@@ -1,8 +1,10 @@
 'use client'
 
 import Link from 'next/link'
-import { Heart } from 'lucide-react'
+import Image from 'next/image'
+import { Heart, Eye } from 'lucide-react'
 import { formatPrice, calculateDiscount } from '@/lib/utils'
+import { useQuickView } from '@/hooks/use-quick-view'
 import type { Product } from '@/types'
 
 interface ProductCardProps {
@@ -10,6 +12,7 @@ interface ProductCardProps {
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+  const openQuickView = useQuickView((s) => s.openQuickView)
   const discount = product.compare_at_price
     ? calculateDiscount(product.price, product.compare_at_price)
     : 0
@@ -23,10 +26,12 @@ export default function ProductCard({ product }: ProductCardProps) {
       {/* Image */}
       <div className="relative aspect-[4/5] bg-gradient-to-br from-warm-100 to-accent-light flex items-center justify-center overflow-hidden">
         {product.images?.[0]?.url ? (
-          <img
+          <Image
             src={product.images[0].url}
             alt={product.title}
-            className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+            fill
+            sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+            className="object-cover transition-transform duration-500 ease-out group-hover:scale-105"
           />
         ) : (
           <span className="text-5xl">🛍️</span>
@@ -44,16 +49,22 @@ export default function ProductCard({ product }: ProductCardProps) {
           </span>
         )}
 
-        {/* Wishlist */}
-        <button
-          onClick={(e) => { e.preventDefault(); }}
-          className="absolute top-3 right-3 w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-md
-                     opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0
-                     transition-all duration-300 ease-out
-                     hover:scale-110 hover:bg-white"
-        >
-          <Heart size={16} />
-        </button>
+        {/* Actions */}
+        <div className="absolute top-3 right-3 flex flex-col gap-2 opacity-0 group-hover:opacity-100 translate-y-1 group-hover:translate-y-0 transition-all duration-300 ease-out">
+          <button
+            onClick={(e) => { e.preventDefault(); }}
+            className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-md hover:scale-110 hover:bg-white transition-all"
+          >
+            <Heart size={16} />
+          </button>
+          <button
+            onClick={(e) => { e.preventDefault(); openQuickView(product); }}
+            className="w-9 h-9 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center shadow-md hover:scale-110 hover:bg-white transition-all"
+            title="Quick view"
+          >
+            <Eye size={16} />
+          </button>
+        </div>
       </div>
 
       {/* Info */}
