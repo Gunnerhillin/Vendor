@@ -28,9 +28,10 @@
     "zustand": "^5.0.0"
   },
   "devDependencies": {
-    "@types/node": "^20",
+    "@types/node": "^25.4.0",
     "@types/react": "^18",
     "@types/react-dom": "^18",
-    "typescript": "^5"
+    "csstype": "^3.2.3",
+    "typescript": "^5.4.5"
   }
 }

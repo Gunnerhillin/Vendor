@@ -37,6 +37,12 @@ export interface Vendor {
   offers_local_pickup: boolean
   pickup_address: string | null
   pickup_instructions: string | null
+  offers_free_shipping: boolean
+  free_shipping_minimum: number | null
+  shipping_policy: string | null
+  processing_time: string | null
+  return_policy: string | null
+  shipping_webhook_token: string | null
 }
 
 export interface Category {
@@ -108,6 +114,8 @@ export interface Order {
   updated_at: string
 }
 
+export type ReturnStatus = 'requested' | 'approved' | 'denied' | 'completed'
+
 export interface OrderItem {
   id: string
   order_id: string
@@ -120,6 +128,32 @@ export interface OrderItem {
   quantity: number
   unit_price: number
   status: OrderStatus
+  tracking_number?: string | null
+  shipping_carrier?: string | null
+  shipped_at?: string | null
+  delivered_at?: string | null
+  return_status?: ReturnStatus | null
+  return_reason?: string | null
+}
+
+export interface ReturnRequest {
+  id: string
+  order_item_id: string
+  order_item?: OrderItem
+  order_id: string
+  order?: Order
+  customer_id: string
+  customer?: Profile
+  vendor_id: string
+  vendor?: Vendor
+  reason: string
+  description: string | null
+  status: ReturnStatus
+  admin_override: boolean
+  resolved_by: string | null
+  resolution_notes: string | null
+  created_at: string
+  updated_at: string
 }
 
 export interface ShippingAddress {

@@ -76,10 +76,10 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Calculate taxes and shipping
+    // Calculate taxes — shipping is handled by individual vendors, not the platform
     const tax = Math.round(subtotal * 0.08 * 100) / 100
-    const shipping = subtotal >= 50 ? 0 : 5.99
-    const total = Math.round((subtotal + tax + shipping) * 100) / 100
+    const shipping = 0
+    const total = Math.round((subtotal + tax) * 100) / 100
 
     // Build transfer metadata for each vendor (used after payment succeeds)
     const transferGroup = `order_${Date.now()}`

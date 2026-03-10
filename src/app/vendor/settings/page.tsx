@@ -2,7 +2,7 @@
 
 import { Suspense, useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
-import { Upload, CreditCard, Check, ExternalLink, AlertCircle, MapPin } from "lucide-react"
+import { Upload, CreditCard, Check, ExternalLink, AlertCircle, MapPin, Truck, RotateCcw, Copy, RefreshCw } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
 
 export default function VendorSettingsPage() {
@@ -36,6 +36,13 @@ function VendorSettingsContent() {
   const [offersPickup, setOffersPickup] = useState(false)
   const [pickupAddress, setPickupAddress] = useState("")
   const [pickupInstructions, setPickupInstructions] = useState("")
+  const [offersFreeShipping, setOffersFreeShipping] = useState(false)
+  const [freeShippingMinimum, setFreeShippingMinimum] = useState("")
+  const [shippingPolicy, setShippingPolicy] = useState("")
+  const [processingTime, setProcessingTime] = useState("1-3 business days")
+  const [vendorReturnPolicy, setVendorReturnPolicy] = useState("")
+  const [webhookToken, setWebhookToken] = useState("")
+  const [tokenCopied, setTokenCopied] = useState(false)
   const [stripeConnecting, setStripeConnecting] = useState(false)
   const [stripeMessage, setStripeMessage] = useState<{ type: 'success' | 'info'; text: string } | null>(null)
   const searchParams = useSearchParams()
@@ -73,6 +80,12 @@ function VendorSettingsContent() {
         setOffersPickup(v.offers_local_pickup || false)
         setPickupAddress(v.pickup_address || "")
         setPickupInstructions(v.pickup_instructions || "")
+        setOffersFreeShipping(v.offers_free_shipping || false)
+        setFreeShippingMinimum(v.free_shipping_minimum ? String(v.free_shipping_minimum) : "")
+        setShippingPolicy(v.shipping_policy || "")
+        setProcessingTime(v.processing_time || "1-3 business days")
+        setVendorReturnPolicy(v.return_policy || "")
+        setWebhookToken(v.shipping_webhook_token || "")
 
         // If stripe param is 'complete' and we have a stripe_account_id, mark onboarding done
         if (searchParams.get('stripe') === 'complete' && v.stripe_account_id && !v.stripe_onboarding_complete) {
@@ -124,6 +137,11 @@ function VendorSettingsContent() {
         offers_local_pickup: offersPickup,
         pickup_address: pickupAddress.trim() || null,
         pickup_instructions: pickupInstructions.trim() || null,
+        offers_free_shipping: offersFreeShipping,
+        free_shipping_minimum: freeShippingMinimum ? parseFloat(freeShippingMinimum) : null,
+        shipping_policy: shippingPolicy.trim() || null,
+        processing_time: processingTime || "1-3 business days",
+        return_policy: vendorReturnPolicy.trim() || null,
       })
       .eq("id", vendor.id)
 
@@ -295,6 +313,180 @@ function VendorSettingsContent() {
               </div>
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Shipping Settings */}
+      <div className="card p-6 md:p-8 mb-6">
+        <h2 className="font-semibold text-lg mb-6 flex items-center gap-2">
+          <Truck size={20} />
+          Shipping Settings
+        </h2>
+        <div className="space-y-5">
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
+            <p className="font-medium mb-1">You handle your own shipping</p>
+            <p className="text-xs text-blue-600">Use ShippingEasy or another platform to purchase labels. When labels are printed, tracking numbers will auto-populate into Vender via your webhook integration.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Processing Time</label>
+            <select value={processingTime} onChange={(e) => setProcessingTime(e.target.value)} className="input">
+              <option value="Same day">Same day</option>
+              <option value="1 business day">1 business day</option>
+              <option value="1-2 business days">1-2 business days</option>
+              <option value="1-3 business days">1-3 business days</option>
+              <option value="3-5 business days">3-5 business days</option>
+              <option value="5-7 business days">5-7 business days</option>
+            </select>
+          </div>
+
+          <div className="border-t border-warm-border pt-5">
+            <label className="flex items-center gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={offersFreeShipping}
+                onChange={(e) => setOffersFreeShipping(e.target.checked)}
+                className="w-4 h-4 rounded border-gray-300 text-accent focus:ring-accent"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-700">Offer Free Shipping</span>
+                <p className="text-xs text-gray-400">You cover shipping costs for your customers</p>
+              </div>
+            </label>
+          </div>
+
+          {offersFreeShipping && (
+            <div className="pl-7">
+              <label className="block text-sm font-medium text-gray-700 mb-1">Minimum Order Amount (optional)</label>
+              <div className="flex items-center">
+                <span className="text-sm text-gray-400 bg-warm-100 px-3 py-3 rounded-l-lg border border-r-0 border-warm-border">$</span>
+                <input
+                  type="number"
+                  value={freeShippingMinimum}
+                  onChange={(e) => setFreeShippingMinimum(e.target.value)}
+                  placeholder="0 (always free)"
+                  min="0"
+                  step="0.01"
+                  className="input rounded-l-none"
+                />
+              </div>
+              <p className="text-xs text-gray-400 mt-1">Leave empty or 0 for free shipping on all orders</p>
+            </div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Shipping Policy (optional)</label>
+            <textarea
+              value={shippingPolicy}
+              onChange={(e) => setShippingPolicy(e.target.value)}
+              placeholder="e.g., We ship via USPS Priority Mail within 1-3 business days. Tracking provided for all orders."
+              className="input min-h-[80px] resize-y"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Return Policy */}
+      <div className="card p-6 md:p-8 mb-6">
+        <h2 className="font-semibold text-lg mb-6 flex items-center gap-2">
+          <RotateCcw size={20} />
+          Return Policy
+        </h2>
+        <div className="space-y-5">
+          <div className="bg-warm-100 rounded-lg p-4 text-sm">
+            <p className="font-medium text-gray-700 mb-1">Site-Wide Return Policy</p>
+            <p className="text-xs text-gray-500">Vender has a standard 30-day return policy for items in original condition. You can add your own additional policy below. Customer service may override return decisions if a customer reaches out directly.</p>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Your Return Policy (optional)</label>
+            <textarea
+              value={vendorReturnPolicy}
+              onChange={(e) => setVendorReturnPolicy(e.target.value)}
+              placeholder="e.g., Custom items are non-returnable. All other items can be returned within 14 days."
+              className="input min-h-[80px] resize-y"
+            />
+            <p className="text-xs text-gray-400 mt-1">This will be shown alongside the site-wide policy on your product pages</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Shipping Integration */}
+      <div className="card p-6 md:p-8 mb-6">
+        <h2 className="font-semibold text-lg mb-6 flex items-center gap-2">
+          <ExternalLink size={20} />
+          Shipping Integration
+        </h2>
+        <div className="space-y-5">
+          <p className="text-sm text-gray-500">Connect your shipping platform (ShippingEasy, ShipStation, Pirate Ship, etc.) to automatically push tracking numbers to Vender when you print labels.</p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                readOnly
+                value={vendor ? `${window.location.origin}/api/vendor/shipping-webhook` : ''}
+                className="input bg-warm-100 text-xs font-mono flex-1"
+              />
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(`${window.location.origin}/api/vendor/shipping-webhook`)
+                  setTokenCopied(true)
+                  setTimeout(() => setTokenCopied(false), 2000)
+                }}
+                className="btn-outline text-xs flex items-center gap-1 whitespace-nowrap"
+              >
+                {tokenCopied ? <><Check size={12} /> Copied</> : <><Copy size={12} /> Copy</>}
+              </button>
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">API Token</label>
+            {webhookToken ? (
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  readOnly
+                  value={webhookToken}
+                  className="input bg-warm-100 text-xs font-mono flex-1"
+                />
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(webhookToken)
+                    setTokenCopied(true)
+                    setTimeout(() => setTokenCopied(false), 2000)
+                  }}
+                  className="btn-outline text-xs flex items-center gap-1 whitespace-nowrap"
+                >
+                  <Copy size={12} /> Copy
+                </button>
+                <button
+                  onClick={async () => {
+                    const token = crypto.randomUUID().replace(/-/g, '')
+                    await supabase.from("vendors").update({ shipping_webhook_token: token }).eq("id", vendor.id)
+                    setWebhookToken(token)
+                  }}
+                  className="btn-outline text-xs flex items-center gap-1 whitespace-nowrap text-amber-600 border-amber-300 hover:border-amber-500"
+                >
+                  <RefreshCw size={12} /> Regenerate
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={async () => {
+                  const token = crypto.randomUUID().replace(/-/g, '')
+                  await supabase.from("vendors").update({ shipping_webhook_token: token }).eq("id", vendor.id)
+                  setWebhookToken(token)
+                }}
+                className="btn-primary text-sm"
+              >
+                Generate API Token
+              </button>
+            )}
+            <p className="text-xs text-gray-400 mt-2">Use this token as a Bearer token in your shipping platform&apos;s webhook configuration. Include it in the Authorization header.</p>
+          </div>
         </div>
       </div>
 
