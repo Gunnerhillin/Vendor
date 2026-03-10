@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { DollarSign, Store, Package, Clock, ArrowUpRight } from "lucide-react"
+import { DollarSign, Store, Package, Clock, ArrowUpRight, Download, FileText, Presentation, Globe } from "lucide-react"
 import Link from "next/link"
 import { createClient } from "@/lib/supabase/client"
 
@@ -129,6 +129,61 @@ export default function AdminDashboard() {
             ))}
           </div>
         )}
+      </div>
+
+      {/* Marketing Tools */}
+      <div className="card mb-8">
+        <div className="flex items-center justify-between p-6 border-b border-warm-border">
+          <div>
+            <h2 className="font-semibold">Marketing Tools</h2>
+            <p className="text-xs text-gray-400 mt-1">Download resources for vendor outreach and launch</p>
+          </div>
+          <span className="px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-accent/10 text-accent-dark">3 files</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-warm-border">
+          <a
+            href="/marketing/vender-vendor-pitch-deck.pptx"
+            download
+            className="flex items-center gap-4 p-5 hover:bg-warm-50 transition-colors group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-orange-50 flex items-center justify-center text-orange-500 group-hover:bg-orange-100 transition-colors">
+              <Presentation size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold truncate">Vendor Pitch Deck</h4>
+              <p className="text-xs text-gray-400">.pptx &bull; 245 KB</p>
+            </div>
+            <Download size={16} className="text-gray-300 group-hover:text-accent transition-colors" />
+          </a>
+          <a
+            href="/marketing/vender-launch-checklist.docx"
+            download
+            className="flex items-center gap-4 p-5 hover:bg-warm-50 transition-colors group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center text-blue-500 group-hover:bg-blue-100 transition-colors">
+              <FileText size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold truncate">Launch Checklist</h4>
+              <p className="text-xs text-gray-400">.docx &bull; 14 KB</p>
+            </div>
+            <Download size={16} className="text-gray-300 group-hover:text-accent transition-colors" />
+          </a>
+          <a
+            href="/marketing/vendor-landing-page.html"
+            download
+            className="flex items-center gap-4 p-5 hover:bg-warm-50 transition-colors group"
+          >
+            <div className="w-11 h-11 rounded-xl bg-green-50 flex items-center justify-center text-green-500 group-hover:bg-green-100 transition-colors">
+              <Globe size={20} />
+            </div>
+            <div className="flex-1 min-w-0">
+              <h4 className="text-sm font-semibold truncate">Vendor Landing Page</h4>
+              <p className="text-xs text-gray-400">.html &bull; 28 KB</p>
+            </div>
+            <Download size={16} className="text-gray-300 group-hover:text-accent transition-colors" />
+          </a>
+        </div>
       </div>
 
       {/* Panels Grid */}
