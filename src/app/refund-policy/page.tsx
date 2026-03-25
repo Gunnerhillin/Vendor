@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
   title: 'Refund Policy',
-  description: 'Vender refund and return policy for purchases made through our marketplace.',
+  description: 'CutieValley refund and return policy for purchases made through our marketplace.',
 }
 
 export default function RefundPolicyPage() {
@@ -19,7 +19,7 @@ export default function RefundPolicyPage() {
 
         <h2>Overview</h2>
         <p>
-          Vender is a marketplace connecting you with independent vendors. Each product is sold directly by its vendor, and refund policies may vary. This page outlines our general refund framework that all Vender vendors must follow.
+          CutieValley is a marketplace connecting you with independent vendors. Each product is sold directly by its vendor, and refund policies may vary. This page outlines our general refund framework that all CutieValley vendors must follow.
         </p>
 
         <h2>Return Eligibility</h2>
@@ -34,7 +34,7 @@ export default function RefundPolicyPage() {
           <li>Click &quot;Request Return&quot; on the item you&apos;d like to return and select a reason.</li>
           <li>The vendor will review your request and provide return shipping instructions.</li>
           <li>Once the returned item is received and inspected, we will process your refund.</li>
-          <li>If you have trouble with a vendor, contact <a href="mailto:support@vender.com" className="text-accent-dark hover:underline">support@vender.com</a> — our customer service team can override vendor decisions.</li>
+          <li>If you have trouble with a vendor, contact <a href="mailto:support@cutievalley.com" className="text-accent-dark hover:underline">support@cutievalley.com</a> — our customer service team can override vendor decisions.</li>
         </ol>
 
         <h2>Refund Processing</h2>
@@ -64,12 +64,12 @@ export default function RefundPolicyPage() {
 
         <h2>Shipping Costs</h2>
         <p>
-          Return shipping costs are the responsibility of the buyer, unless the item was received damaged, defective, or incorrect. In those cases, Vender or the vendor will cover return shipping.
+          Return shipping costs are the responsibility of the buyer, unless the item was received damaged, defective, or incorrect. In those cases, CutieValley or the vendor will cover return shipping.
         </p>
 
         <h2>Late or Missing Refunds</h2>
         <p>
-          If you haven&apos;t received your refund within 10 business days of our confirmation email, please check with your bank or credit card provider first (processing times vary). If you still haven&apos;t received it, contact us at <a href="mailto:support@vender.com" className="text-accent-dark hover:underline">support@vender.com</a>.
+          If you haven&apos;t received your refund within 10 business days of our confirmation email, please check with your bank or credit card provider first (processing times vary). If you still haven&apos;t received it, contact us at <a href="mailto:support@cutievalley.com" className="text-accent-dark hover:underline">support@cutievalley.com</a>.
         </p>
 
         <h2>Vendor-Specific Policies</h2>
@@ -79,7 +79,7 @@ export default function RefundPolicyPage() {
 
         <h2>Contact Us</h2>
         <p>
-          For any questions about returns or refunds, reach out to our support team at <a href="mailto:support@vender.com" className="text-accent-dark hover:underline">support@vender.com</a> or visit our <Link href="/contact" className="text-accent-dark hover:underline">contact page</Link>.
+          For any questions about returns or refunds, reach out to our support team at <a href="mailto:support@cutievalley.com" className="text-accent-dark hover:underline">support@cutievalley.com</a> or visit our <Link href="/contact" className="text-accent-dark hover:underline">contact page</Link>.
         </p>
       </div>
     </div>

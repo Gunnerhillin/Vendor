@@ -2,8 +2,8 @@ import { Heart, ShieldCheck, Users, MapPin, Mountain, Sun } from 'lucide-react'
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'About Vender | Founded in Saint George, Utah',
-  description: 'Vender is a curated marketplace founded in Saint George, Utah — empowering local and independent brands to reach more customers.',
+  title: 'About CutieValley | Founded in Saint George, Utah',
+  description: 'CutieValley is a curated marketplace founded in Saint George, Utah — empowering local and independent brands to reach more customers.',
 }
 
 export default function AboutPage() {
@@ -20,7 +20,7 @@ export default function AboutPage() {
             Built by Locals,<br />for Everyone
           </h1>
           <p className="text-lg text-gray-600 leading-relaxed">
-            Vender is a curated marketplace connecting shoppers with exceptional products from
+            CutieValley is a curated marketplace connecting shoppers with exceptional products from
             independent creators and small businesses. Born in Southern Utah, built for the world.
           </p>
         </div>
@@ -36,7 +36,7 @@ export default function AboutPage() {
                 From Saint George to everywhere
               </h2>
               <p className="text-gray-600 leading-relaxed mb-4">
-                Vender was founded in Saint George, Utah by local entrepreneurs who saw a gap in the marketplace.
+                CutieValley was founded in Saint George, Utah by local entrepreneurs who saw a gap in the marketplace.
                 Too many talented creators in our community were struggling to reach customers online.
                 Big marketplaces bury small sellers under algorithms, and building a standalone store takes
                 time most small businesses don&apos;t have.
@@ -49,7 +49,7 @@ export default function AboutPage() {
               </p>
               <p className="text-gray-600 leading-relaxed">
                 Whether you&apos;re shopping from right here in Southern Utah or from across the country,
-                every purchase on Vender supports a real person building something they believe in.
+                every purchase on CutieValley supports a real person building something they believe in.
               </p>
             </div>
             <div className="bg-gradient-to-br from-[#2D2926] to-[#3D3936] rounded-2xl p-12 flex items-center justify-center min-h-[300px] relative overflow-hidden">
@@ -170,7 +170,7 @@ export default function AboutPage() {
               Shop Local
             </Link>
             <Link href="/vendor/apply" className="bg-white/10 text-white px-6 py-3 rounded-xl font-semibold hover:bg-white/20 transition-all">
-              Sell on Vender
+              Sell on CutieValley
             </Link>
           </div>
         </div>

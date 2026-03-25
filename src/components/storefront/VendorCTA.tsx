@@ -9,7 +9,7 @@ export default function VendorCTA() {
       <div className="absolute -right-10 -top-10 w-44 h-44 rounded-full border border-accent/10" />
 
       <div className="text-center md:text-left relative">
-        <h2 className="font-display text-2xl md:text-3xl text-white font-semibold mb-3">Sell on Vender</h2>
+        <h2 className="font-display text-2xl md:text-3xl text-white font-semibold mb-3">Sell on CutieValley</h2>
         <p className="text-white/60 text-sm max-w-lg leading-relaxed">
           Join independent brands reaching thousands of new customers every day.
           Simple onboarding, powerful tools, and a dedicated audience ready to shop.

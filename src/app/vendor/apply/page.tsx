@@ -210,7 +210,7 @@ export default function VendorApplyPage() {
           <p className="text-gray-500 text-sm mb-8">
             We&apos;ll review your application within 2-3 business days. You&apos;ll receive an email once your store is approved.
           </p>
-          <Link href="/" className="btn-primary">Back to Vender</Link>
+          <Link href="/" className="btn-primary">Back to CutieValley</Link>
         </div>
       </div>
     )
@@ -219,13 +219,13 @@ export default function VendorApplyPage() {
   return (
     <div className="min-h-screen bg-warm-100">
       <div className="p-6">
-        <Link href="/" className="font-display text-2xl font-bold">V<span className="text-accent">ender</span></Link>
+        <Link href="/" className="font-display text-2xl font-bold">C<span className="text-accent">utieValley</span></Link>
       </div>
 
       <div className="max-w-2xl mx-auto px-4 pb-16">
         <div className="text-center mb-10">
           <Store size={40} className="mx-auto text-accent mb-4" />
-          <h1 className="font-display text-3xl font-semibold mb-2">Sell on Vender</h1>
+          <h1 className="font-display text-3xl font-semibold mb-2">Sell on CutieValley</h1>
           <p className="text-gray-500">Reach thousands of new customers. Simple setup, powerful tools.</p>
         </div>
 

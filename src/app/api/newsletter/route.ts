@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Send welcome email
     await sendEmail({
       to: email,
-      subject: 'Welcome to Vender!',
+      subject: 'Welcome to CutieValley!',
       html: newsletterWelcomeEmail(email),
     })
 

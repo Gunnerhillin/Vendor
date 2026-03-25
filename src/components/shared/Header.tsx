@@ -116,7 +116,7 @@ export default function Header() {
 
           {/* Logo */}
           <Link href="/" className="font-display text-2xl md:text-3xl font-bold tracking-tight">
-            V<span className="text-accent">ender</span>
+            C<span className="text-accent">utieValley</span>
           </Link>
 
           {/* Search Bar */}
@@ -146,7 +146,7 @@ export default function Header() {
             </button>
 
             <Link href="/marketing/vendor-landing-page.html" className="hidden md:block text-sm font-semibold text-accent-dark hover:text-accent transition-all duration-300">
-              Sell on Vender
+              Sell on CutieValley
             </Link>
 
             {/* User / Profile */}
@@ -307,7 +307,7 @@ export default function Header() {
         <div className="md:hidden fixed inset-0 z-40 bg-black/40" onClick={() => setMobileMenuOpen(false)}>
           <div className="w-72 h-full bg-white p-6" onClick={(e) => e.stopPropagation()}>
             <div className="font-display text-2xl font-bold mb-8">
-              V<span className="text-accent">ender</span>
+              C<span className="text-accent">utieValley</span>
             </div>
 
             {user && (
@@ -339,7 +339,7 @@ export default function Header() {
               ))}
               <div className="border-t border-warm-border my-4" />
               <Link href="/marketing/vendor-landing-page.html" className="block py-3 px-4 rounded-lg text-sm font-medium text-accent-dark hover:bg-warm-100">
-                Sell on Vender
+                Sell on CutieValley
               </Link>
               {user ? (
                 <>

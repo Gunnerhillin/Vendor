@@ -9,21 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        primary: '#2D2926',
+        primary: '#3D2C3E',
         accent: {
-          DEFAULT: '#C4956A',
-          light: '#E8D5C0',
-          dark: '#A67B52',
+          DEFAULT: '#E8839C',
+          light: '#F5C6D0',
+          dark: '#C96B82',
         },
         warm: {
-          bg: '#FDFBF9',
-          50: '#FDFBF9',
-          100: '#F7F2ED',
-          200: '#EDE4DA',
-          300: '#E8E2DC',
-          400: '#C4BAAF',
-          500: '#9E9189',
-          border: '#E8E2DC',
+          bg: '#FDF7F9',
+          50: '#FDF7F9',
+          100: '#F9EDF1',
+          200: '#F3DDE5',
+          300: '#EBCFD9',
+          400: '#D4A8B8',
+          500: '#B08394',
+          border: '#EBCFD9',
         },
       },
       fontFamily: {

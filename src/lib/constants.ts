@@ -1,4 +1,4 @@
-export const SITE_NAME = 'Vender'
+export const SITE_NAME = 'CutieValley'
 export const SITE_DESCRIPTION = 'Discover deals you\'ll love from independent brands'
 export const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 

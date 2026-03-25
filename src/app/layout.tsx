@@ -4,7 +4,7 @@ import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants'
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://vendor-uiu3.vercel.app'
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://cutievalley.com'
 
 export const metadata: Metadata = {
   title: {
@@ -32,7 +32,7 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'Vender — Discover Deals You\'ll Love',
+        alt: 'CutieValley — Discover Deals You\'ll Love',
       },
     ],
   },

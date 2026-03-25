@@ -20,24 +20,24 @@ export async function generateMetadata({ params }: { params: { slug: string } })
   const product = products[0] as any
   const images = (product.images || []).sort((a: any, b: any) => a.sort_order - b.sort_order)
   const mainImage = images[0]?.url || '/og-image.png'
-  const vendorName = product.vendor?.business_name || 'Vender'
+  const vendorName = product.vendor?.business_name || 'CutieValley'
   const priceStr = `$${(product.price / 1).toFixed(2)}`
 
   return {
     title: product.title,
-    description: product.description?.slice(0, 160) || `${product.title} by ${vendorName} — ${priceStr} on Vender`,
+    description: product.description?.slice(0, 160) || `${product.title} by ${vendorName} — ${priceStr} on CutieValley`,
     openGraph: {
       title: `${product.title} — ${priceStr}`,
-      description: product.description?.slice(0, 160) || `Shop ${product.title} by ${vendorName} on Vender`,
+      description: product.description?.slice(0, 160) || `Shop ${product.title} by ${vendorName} on CutieValley`,
       type: 'website',
       url: `${SITE_URL}/products/${params.slug}`,
-      siteName: 'Vender',
+      siteName: 'CutieValley',
       images: [{ url: mainImage, width: 800, height: 800, alt: product.title }],
     },
     twitter: {
       card: 'summary_large_image',
       title: `${product.title} — ${priceStr}`,
-      description: product.description?.slice(0, 160) || `Shop ${product.title} on Vender`,
+      description: product.description?.slice(0, 160) || `Shop ${product.title} on CutieValley`,
       images: [mainImage],
     },
   }

@@ -108,7 +108,7 @@ async function easyPostRequest(endpoint: string, method: string = 'GET', body?: 
 // ─── DEFAULT ORIGIN ADDRESS ─────────────────────────────
 // ADMIN REMINDER: Update this with your actual warehouse/fulfillment address
 const DEFAULT_FROM_ADDRESS: EasyPostAddress = {
-  name: 'Vender Fulfillment',
+  name: 'CutieValley Fulfillment',
   street1: '123 Commerce St',
   city: 'New York',
   state: 'NY',

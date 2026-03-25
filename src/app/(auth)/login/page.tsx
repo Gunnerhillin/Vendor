@@ -44,7 +44,7 @@ export default function LoginPage() {
     <div className="card p-8 md:p-10">
       <div className="text-center mb-8">
         <h1 className="font-display text-2xl font-semibold mb-2">Welcome Back</h1>
-        <p className="text-sm text-gray-500">Sign in to your Vender account</p>
+        <p className="text-sm text-gray-500">Sign in to your CutieValley account</p>
       </div>
 
       {error && (

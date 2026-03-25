@@ -307,7 +307,7 @@ export default function HomePage() {
           <div className="section-padding">
             <RevealSection>
               <h2 className="text-2xl md:text-3xl font-display font-bold text-primary text-center mb-12">
-                How Vender Works
+                How CutieValley Works
               </h2>
             </RevealSection>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-12 max-w-4xl mx-auto">

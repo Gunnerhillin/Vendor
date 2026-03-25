@@ -69,7 +69,7 @@ export default function RegisterPage() {
     <div className="card p-8 md:p-10">
       <div className="text-center mb-8">
         <h1 className="font-display text-2xl font-semibold mb-2">Create Your Account</h1>
-        <p className="text-sm text-gray-500">Join Vender and discover amazing deals</p>
+        <p className="text-sm text-gray-500">Join CutieValley and discover amazing deals</p>
       </div>
 
       {error && (

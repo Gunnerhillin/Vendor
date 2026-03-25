@@ -38,8 +38,8 @@ export async function POST(request: NextRequest) {
     await sendEmail({
       to: profile.email,
       subject: approved
-        ? `Welcome to Vender — You're Approved!`
-        : `Vender Application Update`,
+        ? `Welcome to CutieValley — You're Approved!`
+        : `CutieValley Application Update`,
       html: vendorApprovalEmail({
         vendorName: vendor.business_name,
         approved,

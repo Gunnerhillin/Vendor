@@ -74,7 +74,7 @@ export default function Footer() {
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="font-display text-2xl font-bold text-white mb-4 block">
-              V<span className="text-accent">ender</span>
+              C<span className="text-accent">utieValley</span>
             </Link>
             <p className="text-sm leading-relaxed max-w-xs mb-3">
               Curated deals from independent brands. Founded in Saint George, Utah.
@@ -121,7 +121,7 @@ export default function Footer() {
         </div>
 
         <div className="border-t border-white/10 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center gap-4 text-xs">
-          <span>&copy; {new Date().getFullYear()} Vender. All rights reserved.</span>
+          <span>&copy; {new Date().getFullYear()} CutieValley. All rights reserved.</span>
           <span>Made with care in Saint George, Utah.</span>
         </div>
       </div>

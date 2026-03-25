@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import ProductCard from '@/components/storefront/ProductCard'
 import type { Product } from '@/types'
 
-const STORAGE_KEY = 'vender_recently_viewed'
+const STORAGE_KEY = 'cutievalley_recently_viewed'
 const MAX_ITEMS = 8
 
 export function addToRecentlyViewed(productId: string) {

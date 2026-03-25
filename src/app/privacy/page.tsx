@@ -10,7 +10,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="font-display text-xl font-semibold text-primary mb-3">1. Introduction</h2>
           <p>
-            Welcome to Vender. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains what information we collect, how we use it, and what rights you have in relation to it. By using our platform, you agree to the collection and use of information in accordance with this policy.
+            Welcome to CutieValley. We are committed to protecting your personal information and your right to privacy. This Privacy Policy explains what information we collect, how we use it, and what rights you have in relation to it. By using our platform, you agree to the collection and use of information in accordance with this policy.
           </p>
         </section>
 
@@ -35,14 +35,14 @@ export default function PrivacyPolicyPage() {
           <h2 className="font-display text-xl font-semibold text-primary mb-3">3. How We Use Your Information</h2>
           <p>We use the information we collect to:</p>
           <p className="ml-4 mt-2">
-            Provide, maintain, and improve the Vender platform; process transactions and send related information including purchase confirmations and invoices; send you technical notices, updates, security alerts, and support messages; respond to your comments, questions, and customer service requests; monitor and analyze trends, usage, and activities on our platform; and detect, investigate, and prevent fraudulent transactions and other illegal activities.
+            Provide, maintain, and improve the CutieValley platform; process transactions and send related information including purchase confirmations and invoices; send you technical notices, updates, security alerts, and support messages; respond to your comments, questions, and customer service requests; monitor and analyze trends, usage, and activities on our platform; and detect, investigate, and prevent fraudulent transactions and other illegal activities.
           </p>
         </section>
 
         <section>
           <h2 className="font-display text-xl font-semibold text-primary mb-3">4. Information Sharing</h2>
           <p>
-            We do not sell your personal information to third parties. We share information only in the following circumstances: with vendors to fulfill your orders (shipping name and address only), with payment processors (Stripe) to complete transactions, with service providers who assist in operating our platform, and when required by law or to protect the rights and safety of Vender and its users.
+            We do not sell your personal information to third parties. We share information only in the following circumstances: with vendors to fulfill your orders (shipping name and address only), with payment processors (Stripe) to complete transactions, with service providers who assist in operating our platform, and when required by law or to protect the rights and safety of CutieValley and its users.
           </p>
         </section>
 
@@ -84,7 +84,7 @@ export default function PrivacyPolicyPage() {
         <section>
           <h2 className="font-display text-xl font-semibold text-primary mb-3">10. Contact Us</h2>
           <p>
-            If you have any questions about this Privacy Policy, please contact us at <a href="mailto:support@vender.com" className="text-accent hover:underline">support@vender.com</a>.
+            If you have any questions about this Privacy Policy, please contact us at <a href="mailto:support@cutievalley.com" className="text-accent hover:underline">support@cutievalley.com</a>.
           </p>
         </section>
       </div>

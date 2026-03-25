@@ -65,7 +65,7 @@ export default function ContactPage() {
                   <div>
                     <p className="text-sm font-semibold">Email</p>
                     {/* ADMIN REMINDER: Replace with real support email */}
-                    <a href="mailto:support@vender.com" className="text-sm text-accent-dark hover:underline">support@vender.com</a>
+                    <a href="mailto:support@cutievalley.com" className="text-sm text-accent-dark hover:underline">support@cutievalley.com</a>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -93,7 +93,7 @@ export default function ContactPage() {
             <div className="card p-5 bg-warm-100/50">
               <p className="text-xs font-bold text-accent-dark uppercase tracking-widest mb-2">For Vendors</p>
               <p className="text-sm text-gray-600 leading-relaxed">
-                Interested in selling on Vender? Visit our{' '}
+                Interested in selling on CutieValley? Visit our{' '}
                 <a href="/marketing/vendor-landing-page.html" className="text-accent-dark font-medium hover:underline">vendor page</a>{' '}
                 to learn more and apply.
               </p>

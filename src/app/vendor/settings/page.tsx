@@ -196,7 +196,7 @@ function VendorSettingsContent() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Store URL</label>
             <div className="flex items-center">
-              <span className="text-sm text-gray-400 bg-warm-100 px-4 py-3 rounded-l-lg border border-r-0 border-warm-border">vender.com/shop/</span>
+              <span className="text-sm text-gray-400 bg-warm-100 px-4 py-3 rounded-l-lg border border-r-0 border-warm-border">cutievalley.com/shop/</span>
               <input type="text" value={slug} onChange={(e) => setSlug(e.target.value)} className="input rounded-l-none" />
             </div>
           </div>
@@ -325,7 +325,7 @@ function VendorSettingsContent() {
         <div className="space-y-5">
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-sm text-blue-700">
             <p className="font-medium mb-1">You handle your own shipping</p>
-            <p className="text-xs text-blue-600">Use ShippingEasy or another platform to purchase labels. When labels are printed, tracking numbers will auto-populate into Vender via your webhook integration.</p>
+            <p className="text-xs text-blue-600">Use ShippingEasy or another platform to purchase labels. When labels are printed, tracking numbers will auto-populate into CutieValley via your webhook integration.</p>
           </div>
 
           <div>
@@ -395,7 +395,7 @@ function VendorSettingsContent() {
         <div className="space-y-5">
           <div className="bg-warm-100 rounded-lg p-4 text-sm">
             <p className="font-medium text-gray-700 mb-1">Site-Wide Return Policy</p>
-            <p className="text-xs text-gray-500">Vender has a site-wide return policy: items in returnable condition can be returned. You can add your own additional policy below. Customer service may override return decisions if a customer reaches out directly.</p>
+            <p className="text-xs text-gray-500">CutieValley has a site-wide return policy: items in returnable condition can be returned. You can add your own additional policy below. Customer service may override return decisions if a customer reaches out directly.</p>
           </div>
 
           <div>
@@ -418,7 +418,7 @@ function VendorSettingsContent() {
           Shipping Integration
         </h2>
         <div className="space-y-5">
-          <p className="text-sm text-gray-500">Connect your shipping platform (ShippingEasy, ShipStation, Pirate Ship, etc.) to automatically push tracking numbers to Vender when you print labels.</p>
+          <p className="text-sm text-gray-500">Connect your shipping platform (ShippingEasy, ShipStation, Pirate Ship, etc.) to automatically push tracking numbers to CutieValley when you print labels.</p>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Webhook URL</label>

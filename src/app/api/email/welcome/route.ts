@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
     const html = welcomeEmail({ name })
     await sendEmail({
       to: email,
-      subject: `Welcome to Vender, ${name}!`,
+      subject: `Welcome to CutieValley, ${name}!`,
       html,
     })
 

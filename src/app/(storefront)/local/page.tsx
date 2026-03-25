@@ -68,7 +68,7 @@ export default function ShopLocalPage() {
             </h1>
 
             <p className="text-lg md:text-xl text-white/70 mb-8 max-w-2xl mx-auto leading-relaxed">
-              Vender was born in Southern Utah. Discover products from local creators and small
+              CutieValley was born in Southern Utah. Discover products from local creators and small
               businesses right here in St. George and surrounding communities.
             </p>
 
@@ -92,7 +92,7 @@ export default function ShopLocalPage() {
       <div className="section-padding py-16 md:py-20">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-center mb-4">Why Shop Local?</h2>
         <p className="text-center text-gray-500 mb-12 max-w-lg mx-auto">
-          When you buy from local vendors on Vender, your money stays in the community and supports real people.
+          When you buy from local vendors on CutieValley, your money stays in the community and supports real people.
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
@@ -215,7 +215,7 @@ export default function ShopLocalPage() {
             Founded in Saint George, Utah
           </h2>
           <p className="text-white/60 max-w-lg mx-auto mb-8 leading-relaxed">
-            Vender was created by local founders who believe in the power of community commerce.
+            CutieValley was created by local founders who believe in the power of community commerce.
             We&apos;re building a marketplace that puts local creators first — starting right here in our hometown.
           </p>
           <div className="flex flex-wrap gap-4 justify-center">

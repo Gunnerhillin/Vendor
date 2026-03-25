@@ -2,8 +2,8 @@
 // To enable: npm install resend && set RESEND_API_KEY in .env.local
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY
-const FROM_EMAIL = process.env.FROM_EMAIL || 'Vender <noreply@vender.com>'
-const SITE_NAME = 'Vender'
+const FROM_EMAIL = process.env.FROM_EMAIL || 'CutieValley <noreply@cutievalley.com>'
+const SITE_NAME = 'CutieValley'
 const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
 interface SendEmailOptions {
@@ -78,13 +78,13 @@ const emailWrapper = (content: string) => `
 </head>
 <body>
   <div class="container">
-    <div class="logo">V<span>ender</span></div>
+    <div class="logo">C<span>utieValley</span></div>
     <div class="card">
       ${content}
     </div>
     <div class="footer">
-      <p>&copy; ${new Date().getFullYear()} Vender. All rights reserved.</p>
-      <p>You're receiving this because you have an account at Vender.</p>
+      <p>&copy; ${new Date().getFullYear()} CutieValley. All rights reserved.</p>
+      <p>You're receiving this because you have an account at CutieValley.</p>
     </div>
   </div>
 </body>
@@ -206,7 +206,7 @@ export function vendorApprovalEmail(data: {
     return emailWrapper(`
       <h1>You're Approved!</h1>
       <p>Hi ${data.vendorName},</p>
-      <p>Congratulations! Your vendor application has been approved. You can now start listing products on Vender.</p>
+      <p>Congratulations! Your vendor application has been approved. You can now start listing products on CutieValley.</p>
       <p>Next steps:</p>
       <p>1. Set up your Stripe account to receive payments<br>
          2. Add your first products<br>
@@ -220,7 +220,7 @@ export function vendorApprovalEmail(data: {
   return emailWrapper(`
     <h1>Application Update</h1>
     <p>Hi ${data.vendorName},</p>
-    <p>Thank you for your interest in selling on Vender. Unfortunately, we're unable to approve your application at this time.</p>
+    <p>Thank you for your interest in selling on CutieValley. Unfortunately, we're unable to approve your application at this time.</p>
     <p>This could be due to incomplete information or your products not being the right fit for our marketplace at this time. You're welcome to apply again in the future.</p>
     <p>If you have questions, please reach out to our support team.</p>
   `)
@@ -228,8 +228,8 @@ export function vendorApprovalEmail(data: {
 
 export function newsletterWelcomeEmail(email: string) {
   return emailWrapper(`
-    <h1>Welcome to Vender!</h1>
-    <p>Thanks for subscribing to the Vender newsletter.</p>
+    <h1>Welcome to CutieValley!</h1>
+    <p>Thanks for subscribing to the CutieValley newsletter.</p>
     <p>You'll be the first to know about new vendors, exclusive deals, and limited drops. We only send the good stuff — no spam, ever.</p>
     <div style="text-align: center; margin-top: 24px;">
       <a href="${SITE_URL}" class="btn">Start Shopping</a>
@@ -239,7 +239,7 @@ export function newsletterWelcomeEmail(email: string) {
 
 export function welcomeEmail(data: { name: string }) {
   return emailWrapper(`
-    <h1>Welcome to Vender!</h1>
+    <h1>Welcome to CutieValley!</h1>
     <p>Hi ${data.name},</p>
     <p>Thanks for creating your account! You're now part of a community that supports independent brands and creators.</p>
     <p>Here's what you can do:</p>
