@@ -5,7 +5,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-warm-100 flex flex-col">
       <div className="p-6">
         <Link href="/" className="font-display text-2xl font-bold">
-          V<span className="text-accent">ender</span>
+          Cutie<span className="text-accent">Valley</span>
         </Link>
       </div>
       <div className="flex-1 flex items-center justify-center px-4 pb-16">

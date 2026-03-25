@@ -80,7 +80,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <div className="bg-primary text-white h-14 flex items-center justify-between px-6 sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <Link href="/admin/dashboard" className="font-display text-xl font-bold">
-            V<span className="text-accent">ender</span>
+            Cutie<span className="text-accent">Valley</span>
           </Link>
           <span className="text-[10px] font-bold uppercase tracking-wider bg-accent px-2.5 py-1 rounded-full">Admin</span>
         </div>

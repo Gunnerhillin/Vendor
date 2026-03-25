@@ -26,7 +26,7 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
       {/* Top bar */}
       <div className="bg-white border-b border-warm-border h-16 flex items-center justify-between px-6 sticky top-0 z-40">
         <Link href="/" className="font-display text-2xl font-bold">
-          V<span className="text-accent">ender</span>
+          Cutie<span className="text-accent">Valley</span>
           <span className="text-xs font-sans font-normal text-gray-400 ml-2">Vendor Portal</span>
         </Link>
         <div className="flex items-center gap-4">
