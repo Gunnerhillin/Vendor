@@ -116,17 +116,10 @@ export default function AdminProductsPage() {
     async function fetchProducts() {
       const { data } = await supabase
         .from("products")
-        .select("*, vendor:vendors(business_name), category:categories(name), images:product_images(url, position)")
+        .select("*, vendor:vendors(business_name), category:categories(name), images:product_images(url)")
         .order("created_at", { ascending: false })
 
-      if (data) {
-        // Sort images by position within each product
-        const sorted = data.map(p => ({
-          ...p,
-          images: (p.images || []).sort((a: any, b: any) => (a.position || 0) - (b.position || 0))
-        }))
-        setProducts(sorted)
-      }
+      if (data) setProducts(data)
       setLoading(false)
     }
     fetchProducts()
