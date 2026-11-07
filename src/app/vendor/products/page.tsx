@@ -1,5 +1,6 @@
 "use client"
 
+import { assetUrl } from '@/lib/media'
 import { useState, useEffect, useRef } from "react"
 import { Plus, Search, Eye, Edit, Trash2, X, Upload, ImageIcon } from "lucide-react"
 import { createClient } from "@/lib/supabase/client"
@@ -60,7 +61,7 @@ export default function VendorProductsPage() {
 
   async function fetchData() {
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!user) { setLoading(false); return }
 
     // Get vendor
     const { data: vendor } = await supabase
@@ -69,7 +70,7 @@ export default function VendorProductsPage() {
       .eq("user_id", user.id)
       .single()
 
-    if (!vendor) return
+    if (!vendor) { setLoading(false); return }
     setVendorId(vendor.id)
 
     // Fetch products
@@ -122,7 +123,7 @@ export default function VendorProductsPage() {
   }
 
   const handleImageUpload = (files: FileList) => {
-    const newImages = Array.from(files).filter(f => f.type.startsWith("image/")).map(file => ({
+    const newImages = Array.from(files).filter(f => ["image/jpeg", "image/png", "image/webp"].includes(f.type)).map(file => ({
       file,
       preview: URL.createObjectURL(file),
     }))
@@ -163,13 +164,14 @@ export default function VendorProductsPage() {
 
           const { error: uploadErr } = await supabase.storage
             .from("vendor-assets")
-            .upload(filePath, img.file, { upsert: true })
+            .upload(filePath, img.file, { upsert: false })
 
+          if (uploadErr) throw new Error("Unable to upload a product image. Please try again.")
           if (!uploadErr) {
             const { data: urlData } = supabase.storage
               .from("vendor-assets")
               .getPublicUrl(filePath)
-            imageUrls.push({ url: urlData.publicUrl, alt: title })
+            imageUrls.push({ url: assetUrl(filePath), alt: title })
           }
         }
       }

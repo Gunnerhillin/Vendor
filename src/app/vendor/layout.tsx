@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation"
 import { LayoutDashboard, Package, ShoppingCart, DollarSign, BarChart3, MessageSquare, Settings, RotateCcw, Zap } from "lucide-react"
 
 const sidebarLinks = [
+  { href: "/vendor/get-started", label: "Get Started", icon: LayoutDashboard },
   { href: "/vendor/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/vendor/products", label: "Products", icon: Package },
   { href: "/vendor/orders", label: "Orders", icon: ShoppingCart },

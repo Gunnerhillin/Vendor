@@ -1,5 +1,6 @@
 'use client'
 
+import { assetUrl } from '@/lib/media'
 import { useEffect, useState, useRef } from 'react'
 import Image from 'next/image'
 import { Camera, Check, Loader2 } from 'lucide-react'
@@ -73,7 +74,7 @@ export default function AccountPage() {
     // Upload to Supabase Storage
     const { error: uploadErr } = await supabase.storage
       .from('avatars')
-      .upload(filePath, file, { upsert: true })
+      .upload(filePath, file, { upsert: false })
 
     if (uploadErr) {
       // If bucket doesn't exist, show helpful message
@@ -92,13 +93,13 @@ export default function AccountPage() {
     // Update profile
     const { error: updateErr } = await supabase
       .from('profiles')
-      .update({ avatar_url: urlData.publicUrl })
+      .update({ avatar_url: assetUrl(filePath, 'avatars') })
       .eq('id', profile.id)
 
     if (updateErr) {
       setError(updateErr.message)
     } else {
-      setProfile({ ...profile, avatar_url: urlData.publicUrl } as Profile)
+      setProfile({ ...profile, avatar_url: assetUrl(filePath, 'avatars') } as Profile)
     }
 
     setUploading(false)

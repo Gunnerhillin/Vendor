@@ -42,34 +42,19 @@ function RevealSection({ children, className = '', delay = '' }: { children: Rea
   )
 }
 
-/* ── Placeholder products shown when the DB is empty ── */
-/* ADMIN REMINDER: Replace these with real product data once vendors are onboarded */
-const PLACEHOLDER_PRODUCTS = [
-  { id: 'ph-1', title: 'Handcrafted Ceramic Vase', price: 42, compare_price: 58, slug: 'handcrafted-ceramic-vase', images: [], vendor: { business_name: 'Coming Soon', slug: '#' }, status: 'approved' },
-  { id: 'ph-2', title: 'Organic Cotton Tote Bag', price: 24, compare_price: 35, slug: 'organic-cotton-tote', images: [], vendor: { business_name: 'Coming Soon', slug: '#' }, status: 'approved' },
-  { id: 'ph-3', title: 'Artisan Soy Candle Set', price: 36, compare_price: 48, slug: 'artisan-soy-candle-set', images: [], vendor: { business_name: 'Coming Soon', slug: '#' }, status: 'approved' },
-  { id: 'ph-4', title: 'Minimalist Gold Necklace', price: 54, compare_price: 72, slug: 'minimalist-gold-necklace', images: [], vendor: { business_name: 'Coming Soon', slug: '#' }, status: 'approved' },
-]
-
-/* ── Placeholder featured vendor shown when none exist ── */
-/* ADMIN REMINDER: Replace with real featured vendor once vendors are approved */
-const PLACEHOLDER_VENDOR = {
-  slug: '#',
-  business_name: 'Your Brand Here',
-  description: 'This spotlight is waiting for its first featured vendor. Once vendors are approved, the top-performing brand will appear here with their story and products.',
-}
-
 export default function HomePage() {
   const [trending, setTrending] = useState<Product[]>([])
   const [newArrivals, setNewArrivals] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [featured, setFeatured] = useState<any>(undefined)
+  const [loadError, setLoadError] = useState(false)
 
   useEffect(() => {
     async function fetchProducts() {
       const supabase = createClient()
 
       // Trending (most sold)
-      const { data: trendingData } = await supabase
+      const { data: trendingData, error: trendingError } = await supabase
         .from('products')
         .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
         .eq('status', 'approved')
@@ -87,13 +72,18 @@ export default function HomePage() {
         .limit(8)
 
       if (newData) setNewArrivals(newData as any)
+      const { data: brand } = await supabase.from('vendors')
+        .select('slug, business_name, description, logo_url, banner_url')
+        .eq('status', 'approved').eq('is_featured', true).order('approved_at').limit(1).maybeSingle()
+      if (brand) setFeatured(brand)
+      setLoadError(!!trendingError)
       setLoading(false)
     }
     fetchProducts()
   }, [])
 
-  const showTrending = trending.length > 0 ? trending : PLACEHOLDER_PRODUCTS
-  const showNewArrivals = newArrivals.length > 0 ? newArrivals : PLACEHOLDER_PRODUCTS
+  const showTrending = trending
+  const showNewArrivals = newArrivals
   const isPlaceholder = trending.length === 0 && !loading
 
   return (
@@ -178,7 +168,7 @@ export default function HomePage() {
                     <Truck size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-primary">Tracked Shipping</p>
+                    <p className="text-sm font-semibold text-primary">Vendor Fulfillment</p>
                     <p className="text-[11px] text-gray-400">On every order</p>
                   </div>
                 </div>
@@ -187,7 +177,7 @@ export default function HomePage() {
                     <RefreshCw size={20} />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-primary">Hassle-Free Returns</p>
+                    <p className="text-sm font-semibold text-primary">Clear Return Policies</p>
                     <p className="text-[11px] text-gray-400">Returnable condition policy</p>
                   </div>
                 </div>
@@ -246,7 +236,7 @@ export default function HomePage() {
               {isPlaceholder && (
                 <div className="mb-4 flex items-center gap-2 text-xs text-accent-dark bg-accent/5 rounded-full px-4 py-2 w-fit mx-auto">
                   <Sparkles size={14} />
-                  <span>Preview — real products appear once vendors are onboarded</span>
+                  <span>{loadError ? 'We couldn’t load the collection. Please try again shortly.' : 'Our first collection is on its way. Join the newsletter for launch updates.'}</span>
                 </div>
               )}
               <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 ${isPlaceholder ? 'opacity-75' : ''}`}>
@@ -269,7 +259,7 @@ export default function HomePage() {
             </div>
           </RevealSection>
           <RevealSection>
-            <VendorSpotlight vendor={trending.length > 0 ? undefined : PLACEHOLDER_VENDOR} />
+            <VendorSpotlight vendor={featured} />
           </RevealSection>
         </section>
 
@@ -291,7 +281,7 @@ export default function HomePage() {
             {isPlaceholder && (
               <div className="mb-4 flex items-center gap-2 text-xs text-accent-dark bg-accent/5 rounded-full px-4 py-2 w-fit mx-auto">
                 <Sparkles size={14} />
-                <span>Preview — real products appear once vendors are onboarded</span>
+                <span>{loadError ? 'We couldn’t load the collection. Please try again shortly.' : 'Our first collection is on its way. Join the newsletter for launch updates.'}</span>
               </div>
             )}
             <div className={`grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 ${isPlaceholder ? 'opacity-75' : ''}`}>

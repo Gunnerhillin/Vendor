@@ -36,6 +36,7 @@ export default function AdminVendorsPage() {
   const [vendors, setVendors] = useState<VendorRow[]>([])
   const [filter, setFilter] = useState("all")
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [searchQuery, setSearchQuery] = useState("")
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null)
   const [vendorProducts, setVendorProducts] = useState<Record<string, ProductRow[]>>({})
@@ -44,11 +45,12 @@ export default function AdminVendorsPage() {
 
   useEffect(() => {
     async function fetchVendors() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("vendors")
         .select("*")
         .order("applied_at", { ascending: false })
 
+      if (error) setError(error.message)
       if (data) setVendors(data)
       setLoading(false)
     }
@@ -87,24 +89,16 @@ export default function AdminVendorsPage() {
   }
 
   const handleStatusChange = async (vendorId: string, newStatus: string) => {
-    const updates: any = { status: newStatus }
-    if (newStatus === "approved") updates.approved_at = new Date().toISOString()
-
-    // If approving, also update the user's role to 'vendor'
-    const vendor = vendors.find(v => v.id === vendorId)
-
-    const { error } = await supabase
-      .from("vendors")
-      .update(updates)
-      .eq("id", vendorId)
-
-    if (!error) {
-      setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, ...updates } : v))
-
-      // Update user role if approving
-      if (newStatus === "approved" && vendor?.user_id) {
-        await supabase.from("profiles").update({ role: "vendor" }).eq("id", vendor.user_id)
-      }
+    setError("")
+    const { data, error } = await supabase.rpc("moderate_vendor", {
+      vendor_id: vendorId, new_status: newStatus,
+    })
+    if (error || !data) {
+      setError(error?.message || "Vendor approval did not save. Refresh and try again.")
+      return
+    }
+    if (data) {
+      setVendors(prev => prev.map(v => v.id === vendorId ? { ...v, ...data } : v))
 
       // Send email notification for approval/rejection
       if (newStatus === "approved" || newStatus === "rejected") {
@@ -112,7 +106,9 @@ export default function AdminVendorsPage() {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ vendorId, type: newStatus }),
-        }).catch(err => console.error('Vendor notification failed:', err))
+        }).then(response => {
+          if (!response.ok) setError('Decision saved, but the notification email could not be sent.')
+        }).catch(() => setError('Decision saved, but the notification email could not be sent.'))
       }
     }
   }
@@ -122,7 +118,10 @@ export default function AdminVendorsPage() {
       .from("products")
       .update({ status: newStatus })
       .eq("id", productId)
+      .select("id, status")
+      .single()
 
+    if (error) setError(error.message)
     if (!error) {
       setVendorProducts(prev => ({
         ...prev,
@@ -162,6 +161,7 @@ export default function AdminVendorsPage() {
   return (
     <div className="max-w-6xl">
       <h1 className="font-display text-2xl font-semibold mb-6">Vendor Management</h1>
+      {error && <p role="alert" className="mb-4 text-red-700">{error}</p>}
 
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         {["all", "approved", "pending", "rejected", "frozen"].map((f) => (

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { stripe } from '@/lib/stripe'
 import { DEFAULT_COMMISSION_RATE } from '@/lib/constants'
 import type { CartItem, ShippingAddress } from '@/types'
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const { items, shippingAddress }: { items: CartItem[]; shippingAddress: ShippingAddress } = body
 
-    if (!items || items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0 || items.length > 100) {
       return NextResponse.json({ error: 'Cart is empty' }, { status: 400 })
     }
 
@@ -24,19 +24,28 @@ export async function POST(request: NextRequest) {
     let subtotal = 0
     const orderItems: any[] = []
     const vendorTotals: Record<string, { amount: number; stripeAccountId: string | null; commissionRate: number }> = {}
+    const productQuantities = new Map<string, number>()
+    const variantQuantities = new Map<string, number>()
 
     for (const item of items) {
+      if (!item?.product?.id || !Number.isSafeInteger(item.quantity) || item.quantity < 1 || item.quantity > 1000) {
+        return NextResponse.json({ error: 'Invalid cart item or quantity' }, { status: 400 })
+      }
       // Fetch product with vendor info (including stripe account)
       const { data: product } = await supabase
         .from('products')
-        .select('id, price, vendor_id, title, inventory_count')
+        .select('id, price, vendor_id, title, inventory_count, vendor:vendors!inner(status)')
         .eq('id', item.product.id)
+        .eq('status', 'approved')
+        .eq('vendor.status', 'approved')
         .single()
 
-      if (!product) continue
+      if (!product) return NextResponse.json({ error: 'A product is no longer available' }, { status: 400 })
 
       // Check inventory
-      if (product.inventory_count < item.quantity) {
+      const requested = (productQuantities.get(product.id) || 0) + item.quantity
+      productQuantities.set(product.id, requested)
+      if (product.inventory_count < requested) {
         return NextResponse.json(
           { error: `"${product.title}" only has ${product.inventory_count} in stock` },
           { status: 400 }
@@ -50,8 +59,20 @@ export async function POST(request: NextRequest) {
         .eq('id', product.vendor_id)
         .single()
 
-      const price = product.price + (item.variant?.price_adjustment || 0)
-      const itemTotal = price * item.quantity
+      if (!vendor) return NextResponse.json({ error: 'Vendor unavailable' }, { status: 400 })
+      let adjustment = 0
+      if (item.variant?.id) {
+        const { data: variant } = await supabase.from('product_variants')
+          .select('id, price_adjustment, inventory_count').eq('id', item.variant.id).eq('product_id', product.id).single()
+        const variantQuantity = (variantQuantities.get(item.variant.id) || 0) + item.quantity
+        variantQuantities.set(item.variant.id, variantQuantity)
+        if (!variant || variant.inventory_count < variantQuantity) return NextResponse.json({ error: 'Variant unavailable' }, { status: 400 })
+        adjustment = Number(variant.price_adjustment)
+      }
+      const cents = Math.round((Number(product.price) + adjustment) * 100)
+      if (!Number.isSafeInteger(cents) || cents <= 0) return NextResponse.json({ error: 'Invalid product price' }, { status: 400 })
+      const price = cents / 100
+      const itemTotal = cents * item.quantity / 100
       subtotal += itemTotal
 
       orderItems.push({
@@ -61,6 +82,7 @@ export async function POST(request: NextRequest) {
         quantity: item.quantity,
         unit_price: price,
         status: 'pending',
+        commission_rate: vendor.commission_rate ?? DEFAULT_COMMISSION_RATE,
       })
 
       // Accumulate vendor totals for transfers
@@ -108,7 +130,8 @@ export async function POST(request: NextRequest) {
     })
 
     // Create order in DB
-    const { data: order, error: orderError } = await supabase
+    const service = await createServiceRoleClient()
+    const { data: order, error: orderError } = await service
       .from('orders')
       .insert({
         customer_id: user.id,
@@ -140,7 +163,7 @@ export async function POST(request: NextRequest) {
       order_id: order.id,
     }))
 
-    const { error: itemsError } = await supabase.from('order_items').insert(itemsWithOrderId)
+    const { error: itemsError } = await service.from('order_items').insert(itemsWithOrderId)
 
     if (itemsError) {
       console.error('Order items error:', itemsError)

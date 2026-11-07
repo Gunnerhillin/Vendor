@@ -9,11 +9,6 @@ const nextConfig = {
       },
     ],
   },
-  typescript: {
-    // Supabase SSR package has type compatibility issues with newer TypeScript
-    // The app compiles fine — these are purely type-level dependency mismatches
-    ignoreBuildErrors: true,
-  },
 }
 
 export default nextConfig

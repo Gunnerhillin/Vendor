@@ -156,6 +156,13 @@ export async function PATCH(request: NextRequest) {
       }
     }
 
+    if (status === 'completed') {
+      return NextResponse.json({ error: 'A return cannot be marked refunded here. An administrator must issue and reconcile the actual Stripe refund first.' }, { status: 409 })
+    }
+    if (!['approved', 'denied'].includes(status)) {
+      return NextResponse.json({ error: 'Invalid return decision' }, { status: 400 })
+    }
+
     // Update return request
     const { error: updateError } = await supabase
       .from('return_requests')
@@ -180,14 +187,6 @@ export async function PATCH(request: NextRequest) {
         return_notes: resolution_notes || null,
       })
       .eq('id', returnReq.order_item_id)
-
-    // If return is approved/completed and admin, could trigger refund
-    if (status === 'completed') {
-      await supabase
-        .from('order_items')
-        .update({ status: 'refunded' })
-        .eq('id', returnReq.order_item_id)
-    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

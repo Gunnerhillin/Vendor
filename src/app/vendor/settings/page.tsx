@@ -1,5 +1,6 @@
 "use client"
 
+import { assetUrl } from '@/lib/media'
 import { Suspense, useEffect, useState, useRef } from "react"
 import { useSearchParams } from "next/navigation"
 import { Upload, CreditCard, Check, ExternalLink, AlertCircle, MapPin, Truck, RotateCcw, Copy, RefreshCw } from "lucide-react"
@@ -51,7 +52,7 @@ function VendorSettingsContent() {
     // Handle Stripe Connect return
     const stripeParam = searchParams.get('stripe')
     if (stripeParam === 'complete') {
-      setStripeMessage({ type: 'success', text: 'Stripe account connected successfully! You can now receive payouts.' })
+      setStripeMessage({ type: 'success', text: 'Stripe setup submitted. Payout eligibility will update after verification.' })
     } else if (stripeParam === 'refresh') {
       setStripeMessage({ type: 'info', text: 'Stripe setup was interrupted. Click "Connect Stripe Account" to continue.' })
     }
@@ -87,11 +88,7 @@ function VendorSettingsContent() {
         setVendorReturnPolicy(v.return_policy || "")
         setWebhookToken(v.shipping_webhook_token || "")
 
-        // If stripe param is 'complete' and we have a stripe_account_id, mark onboarding done
-        if (searchParams.get('stripe') === 'complete' && v.stripe_account_id && !v.stripe_onboarding_complete) {
-          await supabase.from("vendors").update({ stripe_onboarding_complete: true }).eq("id", v.id)
-          v.stripe_onboarding_complete = true
-        }
+
       }
       setLoading(false)
     }
@@ -107,12 +104,12 @@ function VendorSettingsContent() {
 
     const { error } = await supabase.storage
       .from("vendor-assets")
-      .upload(filePath, file, { upsert: true })
+      .upload(filePath, file, { upsert: false })
 
     if (!error) {
       const { data: urlData } = supabase.storage.from("vendor-assets").getPublicUrl(filePath)
-      if (type === "logo") setLogoUrl(urlData.publicUrl)
-      else setBannerUrl(urlData.publicUrl)
+      if (type === "logo") setLogoUrl(assetUrl(filePath))
+      else setBannerUrl(assetUrl(filePath))
     }
   }
 

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient, createServiceRoleClient } from '@/lib/supabase/server'
 import { createConnectAccount, createAccountLink } from '@/lib/stripe'
 
 export async function POST(request: NextRequest) {
@@ -30,10 +30,11 @@ export async function POST(request: NextRequest) {
     // Create account if not exists
     if (!stripeAccountId) {
       try {
-        const account = await createConnectAccount(user.email!, vendor.business_name)
+        const account = await createConnectAccount(user.email!, vendor.business_name, vendor.id)
         stripeAccountId = account.id
 
-        const { error: updateError } = await supabase
+        const service = await createServiceRoleClient()
+        const { error: updateError } = await service
           .from('vendors')
           .update({ stripe_account_id: account.id })
           .eq('id', vendor.id)

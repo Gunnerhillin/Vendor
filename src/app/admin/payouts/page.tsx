@@ -31,7 +31,7 @@ export default function AdminPayoutsPage() {
     fetchPayouts()
   }, [])
 
-  const pending = payouts.filter(p => p.status === "pending")
+  const pending = payouts.filter(p => p.status === "pending" && !p.reconciliation_required)
   const paid = payouts.filter(p => p.status === "paid")
   const totalPending = pending.reduce((sum, p) => sum + Number(p.amount), 0)
   const totalPaid = paid.reduce((sum, p) => sum + Number(p.amount), 0)
@@ -47,6 +47,7 @@ export default function AdminPayoutsPage() {
   return (
     <div className="max-w-6xl">
       <h1 className="font-display text-2xl font-semibold mb-6">Payout Management</h1>
+      <p className="mb-4 text-sm text-gray-600">Pending amounts are recorded earnings, not completed bank transfers. Refund-related payouts require reconciliation before release.</p>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
         <div className="card p-6">
@@ -91,7 +92,7 @@ export default function AdminPayoutsPage() {
                 {payouts.map((p) => (
                   <tr key={p.id} className="border-b border-warm-border last:border-0">
                     <td className="px-6 py-4 text-sm font-medium">{p.vendor?.business_name || "—"}</td>
-                    <td className="px-6 py-4 text-sm font-bold">{formatPrice(p.amount)}</td>
+                    <td className="px-6 py-4 text-sm font-bold">{formatPrice(p.amount)}{p.reconciliation_required && <p className="text-xs text-red-700">Refund review required</p>}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">{formatDate(p.period_start)} — {formatDate(p.period_end)}</td>
                     <td className="px-6 py-4"><span className={`badge ${p.status === "paid" ? "badge-success" : p.status === "processing" ? "badge-warning" : "bg-gray-100 text-gray-600"}`}>{p.status}</span></td>
                     <td className="px-6 py-4 text-sm text-gray-500">{p.paid_at ? formatDate(p.paid_at) : formatDate(p.created_at)}</td>

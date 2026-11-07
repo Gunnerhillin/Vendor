@@ -1,5 +1,6 @@
 "use client"
 
+import { assetUrl } from '@/lib/media'
 import { useState, useRef, useCallback } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
@@ -39,8 +40,8 @@ export default function VendorApplyPage() {
   const handleFiles = useCallback((files: FileList | File[]) => {
     const fileArray = Array.from(files)
     const validFiles = fileArray.filter(f => {
-      if (!f.type.startsWith("image/")) return false
-      if (f.size > 10 * 1024 * 1024) return false
+      if (!["image/jpeg", "image/png", "image/webp"].includes(f.type)) return false
+      if (f.size > 5 * 1024 * 1024) return false
       return true
     })
 
@@ -140,13 +141,14 @@ export default function VendorApplyPage() {
 
         const { error: uploadErr } = await supabase.storage
           .from("vendor-assets")
-          .upload(filePath, img.file, { upsert: true })
+          .upload(filePath, img.file, { upsert: false })
 
+        if (uploadErr) throw new Error("Unable to upload sample images. Please try again.")
         if (!uploadErr) {
           const { data: urlData } = supabase.storage
             .from("vendor-assets")
             .getPublicUrl(filePath)
-          imageUrls.push(urlData.publicUrl)
+          imageUrls.push(assetUrl(filePath))
         }
       }
 
@@ -183,12 +185,6 @@ export default function VendorApplyPage() {
         setLoading(false)
         return
       }
-
-      // Update user role to vendor (pending)
-      await supabase
-        .from("profiles")
-        .update({ role: "vendor" })
-        .eq("id", user.id)
 
       setSubmitted(true)
     } catch (err) {

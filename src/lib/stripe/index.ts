@@ -5,7 +5,7 @@ export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   typescript: true,
 })
 
-export async function createConnectAccount(vendorEmail: string, vendorName: string) {
+export async function createConnectAccount(vendorEmail: string, vendorName: string, vendorId: string) {
   const account = await stripe.accounts.create({
     type: 'express',
     email: vendorEmail,
@@ -16,7 +16,7 @@ export async function createConnectAccount(vendorEmail: string, vendorName: stri
       card_payments: { requested: true },
       transfers: { requested: true },
     },
-  })
+  }, { idempotencyKey: `vendor-connect-${vendorId}` })
   return account
 }
 

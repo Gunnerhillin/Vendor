@@ -110,15 +110,17 @@ export default function AdminProductsPage() {
   const supabase = createClient()
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState("")
   const [filter, setFilter] = useState("pending")
 
   useEffect(() => {
     async function fetchProducts() {
-      const { data } = await supabase
+      const { data, error } = await supabase
         .from("products")
         .select("*, vendor:vendors(business_name), category:categories(name), images:product_images(url)")
         .order("created_at", { ascending: false })
 
+      if (error) setError(error.message)
       if (data) setProducts(data)
       setLoading(false)
     }
@@ -126,12 +128,16 @@ export default function AdminProductsPage() {
   }, [])
 
   const handleStatusChange = async (productId: string, newStatus: string) => {
-    const { error } = await supabase
+    setError("")
+    const { data, error } = await supabase
       .from("products")
       .update({ status: newStatus })
       .eq("id", productId)
+      .select("id, status")
+      .single()
 
-    if (!error) {
+    if (error) setError(error.message)
+    if (!error && data) {
       setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: newStatus } : p))
     }
   }
@@ -149,6 +155,7 @@ export default function AdminProductsPage() {
   return (
     <div className="max-w-6xl">
       <h1 className="font-display text-2xl font-semibold mb-6">Product Moderation</h1>
+      {error && <p role="alert" className="mb-4 text-red-700">{error}</p>}
 
       <div className="flex items-center gap-3 mb-6">
         {["pending", "approved", "rejected", "all"].map((f) => (

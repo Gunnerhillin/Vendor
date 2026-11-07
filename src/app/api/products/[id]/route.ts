@@ -15,7 +15,7 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     // Verify product belongs to user's vendor
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, vendor_id, vendors(user_id)')
+      .select('id, vendor_id, vendors(user_id, status)')
       .eq('id', productId)
       .single()
 
@@ -26,6 +26,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     const vendor = Array.isArray(product.vendors) ? product.vendors[0] : product.vendors
     if (!vendor || vendor.user_id !== user.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    }
+
+    if (vendor.status !== 'approved') {
+      return NextResponse.json({ error: 'Not an approved vendor' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -45,7 +49,13 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
     if (compare_at_price !== undefined) updates.compare_at_price = compare_at_price
     if (category_id !== undefined) updates.category_id = category_id
     if (inventory_count !== undefined) updates.inventory_count = inventory_count
+    if (status !== undefined && !['draft', 'pending'].includes(status)) {
+      return NextResponse.json({ error: 'Only administrators can approve products' }, { status: 403 })
+    }
     if (status !== undefined) updates.status = status
+    if ([title, description, price, compare_at_price, category_id, images, variants].some(v => v !== undefined)) {
+      updates.status = 'pending'
+    }
 
     const { data: updatedProduct, error: updateError } = await supabase
       .from('products')
@@ -111,7 +121,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // Verify product belongs to user's vendor
     const { data: product, error: productError } = await supabase
       .from('products')
-      .select('id, vendor_id, vendors(user_id)')
+      .select('id, vendor_id, vendors(user_id, status)')
       .eq('id', productId)
       .single()
 
