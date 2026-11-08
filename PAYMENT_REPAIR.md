@@ -1,6 +1,6 @@
 # Payment event repair — November 7, 2026
 
-Status: implemented and tested locally; not applied to the live database or deployed.
+Status: merged to main and deployed November 7, 2026. Migrations 007–009 applied to the live Supabase project after a rolled-back compatibility test; affected tables and policy/function definitions were snapshotted in a restricted backup schema. Stripe sandbox end-to-end verification is still outstanding.
 
 ## What changed
 

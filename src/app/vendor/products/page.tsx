@@ -17,6 +17,8 @@ interface ProductRow {
   status: string
   inventory_count: number
   sold_count: number
+  updated_at: string
+  moderation_note: string | null
   category_id: string
   images: { id: string; url: string; alt: string | null; sort_order: number }[]
   category?: { name: string; slug: string }
@@ -37,6 +39,8 @@ export default function VendorProductsPage() {
   const [categories, setCategories] = useState<CategoryRow[]>([])
   const [vendorId, setVendorId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
+  const [pageError, setPageError] = useState("")
+  const [notice, setNotice] = useState("")
   const [filter, setFilter] = useState("all")
   const [searchQuery, setSearchQuery] = useState("")
 
@@ -66,21 +70,23 @@ export default function VendorProductsPage() {
     // Get vendor
     const { data: vendor } = await supabase
       .from("vendors")
-      .select("id")
+      .select("id, status")
       .eq("user_id", user.id)
       .single()
 
-    if (!vendor) { setLoading(false); return }
-    setVendorId(vendor.id)
+    if (!vendor) { setPageError("Complete your vendor application before adding products."); setLoading(false); return }
+    setVendorId(vendor.status === "approved" ? vendor.id : null)
+    if (vendor.status !== "approved") setPageError("Your vendor account must be approved before you can add or edit products.")
 
     // Fetch products
-    const { data: prods } = await supabase
+    const { data: prods, error: productsError } = await supabase
       .from("products")
       .select("*, images:product_images(id, url, alt, sort_order), category:categories(name, slug)")
       .eq("vendor_id", vendor.id)
       .order("created_at", { ascending: false })
 
-    if (prods) setProducts(prods as any)
+    if (productsError) setPageError("Products could not be loaded. Please refresh and try again.")
+    if (prods) setProducts(prods.map(p => ({...p, images: p.images.sort((a: any,b: any) => a.sort_order-b.sort_order)})) as any)
 
     // Fetch categories
     const { data: cats } = await supabase
@@ -123,6 +129,11 @@ export default function VendorProductsPage() {
   }
 
   const handleImageUpload = (files: FileList) => {
+    if (Array.from(files).some(f => !["image/jpeg", "image/png", "image/webp"].includes(f.type) || f.size > 5 * 1024 * 1024)) {
+      setModalError("Use JPG, PNG or WebP images, each no larger than 5 MB."); return
+    }
+    if (files.length + imageFiles.length > 8) { setModalError("Use up to 8 images."); return }
+    setModalError("")
     const newImages = Array.from(files).filter(f => ["image/jpeg", "image/png", "image/webp"].includes(f.type)).map(file => ({
       file,
       preview: URL.createObjectURL(file),
@@ -139,12 +150,17 @@ export default function VendorProductsPage() {
     })
   }
 
-  const handleSave = async () => {
+  const handleSave = async (status: "draft" | "pending") => {
     if (!title.trim() || !price || !categoryId) {
       setModalError("Title, price, and category are required.")
       return
     }
 
+    if (!Number.isFinite(Number(price)) || Number(price) <= 0 || !Number.isInteger(Number(inventoryCount)) || Number(inventoryCount) < 0) {
+      setModalError("Enter a positive price and a whole stock quantity of zero or more."); return
+    }
+    if (compareAtPrice && Number(compareAtPrice) <= Number(price)) { setModalError("Compare-at price must be higher than your selling price."); return }
+    if (status === "pending" && (!description.trim() || !imageFiles.length)) { setModalError("Add a description and at least one image before submitting."); return }
     setSaving(true)
     setModalError("")
 
@@ -168,21 +184,20 @@ export default function VendorProductsPage() {
 
           if (uploadErr) throw new Error("Unable to upload a product image. Please try again.")
           if (!uploadErr) {
-            const { data: urlData } = supabase.storage
-              .from("vendor-assets")
-              .getPublicUrl(filePath)
             imageUrls.push({ url: assetUrl(filePath), alt: title })
           }
         }
       }
 
       const body = {
+        status,
+        updated_at: editingProduct?.updated_at,
         title: title.trim(),
         description: description.trim(),
         price: parseFloat(price),
         compare_at_price: compareAtPrice ? parseFloat(compareAtPrice) : null,
         category_id: categoryId,
-        inventory_count: parseInt(inventoryCount) || 0,
+        inventory_count: Number(inventoryCount),
         images: imageUrls,
       }
 
@@ -211,6 +226,7 @@ export default function VendorProductsPage() {
       }
 
       setShowModal(false)
+      setNotice(status === "draft" ? "Draft saved. It is not visible to shoppers." : "Submitted for admin review. Your listing will appear after approval.")
       fetchData() // Refresh
     } catch (err: any) {
       setModalError(err.message)
@@ -222,10 +238,23 @@ export default function VendorProductsPage() {
   const handleDelete = async (productId: string, productTitle: string) => {
     if (!confirm(`Delete "${productTitle}"? This cannot be undone.`)) return
 
+    setPageError("")
     const res = await fetch(`/api/products/${productId}`, { method: "DELETE" })
     if (res.ok) {
       setProducts(prev => prev.filter(p => p.id !== productId))
-    }
+    } else { const data = await res.json(); setPageError(data.error || "Unable to delete product") }
+  }
+
+  const updateStock = async (product: ProductRow) => {
+    const value = prompt(`Stock available for ${product.title}`, String(product.inventory_count))
+    if (value === null) return
+    if (!value.trim() || !Number.isInteger(Number(value)) || Number(value) < 0) { setPageError("Stock must be a whole number of zero or more."); return }
+    try {
+      const res = await fetch(`/api/products/${product.id}`, {method: "PUT", headers: {"Content-Type":"application/json"}, body: JSON.stringify({inventory_count:Number(value),updated_at:product.updated_at})})
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setPageError(""); setNotice("Stock updated. Listing approval is unchanged."); await fetchData()
+    } catch (err: any) { setPageError(err.message || "Could not update stock") }
   }
 
   if (loading) {
@@ -240,14 +269,17 @@ export default function VendorProductsPage() {
     <div className="max-w-6xl">
       <div className="flex items-center justify-between mb-6">
         <h1 className="font-display text-2xl font-semibold">Products</h1>
-        <button onClick={openAddModal} className="btn-primary flex items-center gap-2">
+        <button disabled={!vendorId} onClick={openAddModal} className="btn-primary flex items-center gap-2">
           <Plus size={16} /> Add Product
         </button>
       </div>
 
+      <p className="text-sm text-gray-500 mb-4">Save a draft while you prepare your listing. Submit it when ready for review. Editing a live listing removes it from the shop until it is approved again.</p>
+      {pageError && <p role="alert" className="mb-4 text-red-700">{pageError}</p>}
+      {notice && <p role="status" className="mb-4 text-green-700">{notice}</p>}
       {/* Filters */}
-      <div className="flex items-center gap-3 mb-6">
-        {["all", "approved", "pending", "draft"].map((f) => (
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        {["all", "approved", "pending", "draft", "rejected"].map((f) => (
           <button
             key={f}
             onClick={() => setFilter(f)}
@@ -306,12 +338,13 @@ export default function VendorProductsPage() {
                         <div>
                           <span className="text-sm font-medium">{p.title}</span>
                           {p.category && <p className="text-xs text-gray-400">{p.category.name}</p>}
+                          {p.moderation_note && <p className="text-xs text-red-700 max-w-xs mt-1">Admin feedback: {p.moderation_note}</p>}
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">{formatPrice(p.price)}</td>
                     <td className="px-6 py-4 text-sm">
-                      <span className={p.inventory_count < 10 ? "text-red-500 font-semibold" : ""}>{p.inventory_count}</span>
+                      <button title="Update stock" onClick={() => updateStock(p)} className="underline">{p.inventory_count} · Update</button>
                     </td>
                     <td className="px-6 py-4 text-sm">{p.sold_count}</td>
                     <td className="px-6 py-4">
@@ -326,9 +359,9 @@ export default function VendorProductsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
-                        <Link href={`/products/${p.slug}`} className="p-2 hover:bg-warm-100 rounded-lg text-gray-400 hover:text-primary"><Eye size={16} /></Link>
-                        <button onClick={() => openEditModal(p)} className="p-2 hover:bg-warm-100 rounded-lg text-gray-400 hover:text-primary"><Edit size={16} /></button>
-                        <button onClick={() => handleDelete(p.id, p.title)} className="p-2 hover:bg-warm-100 rounded-lg text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>
+                        {p.status === "approved" && <Link title="View live product" href={`/products/${p.slug}`} className="p-2 hover:bg-warm-100 rounded-lg text-gray-400 hover:text-primary"><Eye size={16} /></Link>}
+                        <button title="Edit product" onClick={() => openEditModal(p)} className="p-2 hover:bg-warm-100 rounded-lg text-gray-400 hover:text-primary"><Edit size={16} /></button>
+                        {p.status === "draft" && <button title="Delete draft" onClick={() => handleDelete(p.id, p.title)} className="p-2 hover:bg-warm-100 rounded-lg text-gray-400 hover:text-red-500"><Trash2 size={16} /></button>}
                       </div>
                     </td>
                   </tr>
@@ -341,19 +374,19 @@ export default function VendorProductsPage() {
 
       {/* Add/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => setShowModal(false)}>
+        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4" onClick={() => { if (!saving) setShowModal(false) }}>
           <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex items-center justify-between p-6 border-b border-warm-border">
               <h2 className="font-display text-lg font-semibold">{editingProduct ? "Edit Product" : "Add Product"}</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-warm-100 rounded-lg"><X size={20} /></button>
+              <button onClick={() => { if (!saving) setShowModal(false) }} className="p-2 hover:bg-warm-100 rounded-lg"><X size={20} /></button>
             </div>
 
-            <div className="p-6 space-y-5">
+            <fieldset disabled={saving} className="p-6 space-y-5">
               {modalError && <div className="p-3 rounded-lg bg-red-50 text-red-600 text-sm">{modalError}</div>}
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Title *</label>
-                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Product name" className="input" />
+                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} maxLength={160} placeholder="Product name" className="input" />
               </div>
 
               <div>
@@ -396,12 +429,12 @@ export default function VendorProductsPage() {
                   className="border-2 border-dashed border-warm-border rounded-xl p-6 text-center cursor-pointer hover:border-accent transition-colors"
                 >
                   <Upload size={24} className="mx-auto text-gray-400 mb-2" />
-                  <p className="text-sm text-gray-500">Click to upload images (up to 8)</p>
+                  <p className="text-sm text-gray-500">Click to upload up to 8 images · JPG, PNG or WebP · 5 MB each</p>
                   <input
                     ref={fileInputRef}
                     type="file"
                     multiple
-                    accept="image/*"
+                    accept="image/jpeg,image/png,image/webp"
                     className="hidden"
                     onChange={(e) => { if (e.target.files) handleImageUpload(e.target.files); e.target.value = "" }}
                   />
@@ -414,7 +447,7 @@ export default function VendorProductsPage() {
                         <button
                           type="button"
                           onClick={() => removeImage(i)}
-                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                          className="absolute top-1 right-1 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center transition-opacity"
                         >
                           <X size={12} />
                         </button>
@@ -423,12 +456,13 @@ export default function VendorProductsPage() {
                   </div>
                 )}
               </div>
-            </div>
+            </fieldset>
 
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-warm-border">
-              <button onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Cancel</button>
-              <button onClick={handleSave} disabled={saving} className="btn-primary">
-                {saving ? "Saving..." : editingProduct ? "Update Product" : "Create Product"}
+            <div className="flex flex-wrap items-center justify-end gap-3 p-6 border-t border-warm-border">
+              <button onClick={() => { if (!saving) setShowModal(false) }} className="px-4 py-2 text-sm font-medium text-gray-500 hover:text-gray-700">Cancel</button>
+              <button onClick={() => handleSave("draft")} disabled={saving} className="px-4 py-2 border rounded-lg text-sm">Save Draft</button>
+              <button onClick={() => handleSave("pending")} disabled={saving} className="btn-primary">
+                {saving ? "Saving..." : "Submit for Review"}
               </button>
             </div>
           </div>

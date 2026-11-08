@@ -111,38 +111,41 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [search, setSearch] = useState("")
+  const [notes, setNotes] = useState<Record<string,string>>({})
   const [filter, setFilter] = useState("pending")
 
   useEffect(() => {
     async function fetchProducts() {
       const { data, error } = await supabase
         .from("products")
-        .select("*, vendor:vendors(business_name), category:categories(name), images:product_images(url)")
+        .select("*, vendor:vendors(business_name,status), category:categories(name), images:product_images(url,sort_order)")
         .order("created_at", { ascending: false })
 
       if (error) setError(error.message)
-      if (data) setProducts(data)
+      if (data) setProducts(data.map(p => ({...p, images: p.images.sort((a: any,b: any) => a.sort_order-b.sort_order)})))
       setLoading(false)
     }
     fetchProducts()
   }, [])
 
-  const handleStatusChange = async (productId: string, newStatus: string) => {
-    setError("")
-    const { data, error } = await supabase
-      .from("products")
-      .update({ status: newStatus })
-      .eq("id", productId)
-      .select("id, status")
-      .single()
-
-    if (error) setError(error.message)
-    if (!error && data) {
-      setProducts(prev => prev.map(p => p.id === productId ? { ...p, status: newStatus } : p))
-    }
+  const handleStatusChange = async (product: any, newStatus: string) => {
+    setError(""); setBusyId(product.id)
+    try {
+      const { data, error } = await supabase.rpc("moderate_product", {
+        product_id_arg: product.id, status_arg: newStatus,
+        note_arg: notes[product.id] || "", expected_updated_at: product.updated_at,
+      })
+      if (error) throw error
+      if (!data) throw new Error("No decision was saved. Refresh and try again.")
+      setProducts(prev => prev.map(p => p.id === product.id ? {...p,...data} : p))
+    } catch (err: any) { setError(err.message || "Could not save decision") }
+    finally { setBusyId(null) }
   }
 
-  const filtered = filter === "all" ? products : products.filter(p => p.status === filter)
+  const filtered = products.filter(p => filter === "all" || p.status === filter)
+    .filter(p => `${p.title} ${p.vendor?.business_name || ""}`.toLowerCase().includes(search.toLowerCase()))
 
   if (loading) {
     return (
@@ -157,8 +160,9 @@ export default function AdminProductsPage() {
       <h1 className="font-display text-2xl font-semibold mb-6">Product Moderation</h1>
       {error && <p role="alert" className="mb-4 text-red-700">{error}</p>}
 
-      <div className="flex items-center gap-3 mb-6">
-        {["pending", "approved", "rejected", "all"].map((f) => (
+      <input aria-label="Search products or brands" placeholder="Search products or brands" className="input mb-4 max-w-sm" value={search} onChange={e => setSearch(e.target.value)} />
+      <div className="flex flex-wrap items-center gap-3 mb-6">
+        {["pending", "approved", "rejected", "draft", "all"].map((f) => (
           <button key={f} onClick={() => setFilter(f)} className={`px-4 py-2 rounded-full text-xs font-semibold capitalize transition-all ${filter === f ? "bg-primary text-white" : "bg-white text-gray-500 border border-warm-border hover:bg-warm-100"}`}>
             {f} ({f === "all" ? products.length : products.filter(p => p.status === f).length})
           </button>
@@ -194,7 +198,7 @@ export default function AdminProductsPage() {
                 </div>
 
                 {p.description && (
-                  <p className="text-xs text-gray-500 line-clamp-2">{p.description}</p>
+                  <p className="text-xs text-gray-500 whitespace-pre-wrap max-h-48 overflow-auto">{p.description}</p>
                 )}
 
                 <div className="flex items-center justify-between text-[11px] text-gray-400">
@@ -202,25 +206,29 @@ export default function AdminProductsPage() {
                   <span>{formatDate(p.created_at)}</span>
                 </div>
 
+                <p className="text-xs text-gray-500">Stock: {p.inventory_count} · Vendor: {p.vendor?.status || "unknown"}</p>
+                {p.moderation_note && <p className="text-xs text-red-700">Previous feedback: {p.moderation_note}</p>}
+                {p.status !== "draft" && <textarea aria-label={`Feedback for ${p.title}`} placeholder="Explain any changes needed (required to reject or remove)" className="input text-sm" maxLength={2000} value={notes[p.id] || ""} onChange={e => setNotes(prev => ({...prev,[p.id]:e.target.value}))} />}
+                {p.status === "draft" && <p className="text-xs text-gray-500">The vendor has not submitted this draft for review.</p>}
                 {/* Action buttons */}
                 <div className="flex gap-2 pt-1">
                   {p.status === "pending" && (
                     <>
-                      <button onClick={() => handleStatusChange(p.id, "approved")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-600 hover:text-white transition-all">
+                      <button disabled={busyId !== null || p.vendor?.status !== "approved"} onClick={() => handleStatusChange(p, "approved")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-600 hover:text-white transition-all">
                         Approve
                       </button>
-                      <button onClick={() => handleStatusChange(p.id, "rejected")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition-all">
+                      <button disabled={busyId !== null || !notes[p.id]?.trim()} onClick={() => handleStatusChange(p, "rejected")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition-all">
                         Reject
                       </button>
                     </>
                   )}
                   {p.status === "approved" && (
-                    <button onClick={() => handleStatusChange(p.id, "rejected")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition-all">
+                    <button disabled={busyId !== null || !notes[p.id]?.trim()} onClick={() => handleStatusChange(p, "rejected")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-red-50 text-red-600 hover:bg-red-500 hover:text-white transition-all">
                       Remove Listing
                     </button>
                   )}
                   {p.status === "rejected" && (
-                    <button onClick={() => handleStatusChange(p.id, "approved")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-600 hover:text-white transition-all">
+                    <button disabled={busyId !== null || p.vendor?.status !== "approved"} onClick={() => handleStatusChange(p, "approved")} className="flex-1 px-3 py-2 rounded-lg text-xs font-semibold bg-green-50 text-green-700 hover:bg-green-600 hover:text-white transition-all">
                       Approve
                     </button>
                   )}

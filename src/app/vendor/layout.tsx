@@ -12,8 +12,6 @@ const sidebarLinks = [
   { href: "/vendor/deals", label: "Flash Deals", icon: Zap },
   { href: "/vendor/returns", label: "Returns", icon: RotateCcw },
   { href: "/vendor/earnings", label: "Earnings", icon: DollarSign },
-  { href: "/vendor/analytics", label: "Analytics", icon: BarChart3 },
-  { href: "/vendor/messages", label: "Messages", icon: MessageSquare },
   { href: "/vendor/settings", label: "Store Settings", icon: Settings },
 ]
 
@@ -36,6 +34,9 @@ export default function VendorLayout({ children }: { children: React.ReactNode }
         </div>
       </div>
 
+      <nav aria-label="Vendor navigation" className="md:hidden flex gap-2 overflow-x-auto bg-white border-b p-3">
+        {sidebarLinks.map(({href,label}) => <Link key={href} href={href} className={`whitespace-nowrap px-3 py-2 rounded-lg text-sm ${pathname === href ? "bg-accent-light font-semibold" : "text-gray-500"}`}>{label}</Link>)}
+      </nav>
       <div className="flex">
         {/* Sidebar */}
         <aside className="w-64 bg-white border-r border-warm-border min-h-[calc(100vh-64px)] sticky top-16 hidden md:block">

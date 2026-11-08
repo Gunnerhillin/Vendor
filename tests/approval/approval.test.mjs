@@ -26,6 +26,7 @@ GRANT USAGE ON SCHEMA storage TO authenticated;
 GRANT SELECT,INSERT,UPDATE,DELETE ON storage.objects TO authenticated;`)
 await db.exec(readFileSync(new URL('supabase/migrations/007_approval_workflows.sql',root),'utf8'))
 await db.exec(readFileSync(new URL('supabase/migrations/008_catalog_launch.sql',root),'utf8'))
+await db.exec(readFileSync(new URL('supabase/migrations/010_product_workflow.sql',root),'utf8'))
 await db.exec(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;`)
 const admin='00000000-0000-0000-0000-000000000001', owner='00000000-0000-0000-0000-000000000002', other='00000000-0000-0000-0000-000000000003'
@@ -90,5 +91,5 @@ await db.query(`SELECT feature_vendor($1)`,[v])
 assert.equal((await db.query(`SELECT is_featured FROM vendors WHERE id=$1`,[v])).rows[0].is_featured,true);checks++
 await db.query(`SELECT feature_vendor(null)`)
 assert.equal((await db.query(`SELECT is_featured FROM vendors WHERE id=$1`,[v])).rows[0].is_featured,false);checks++
-console.log(`${checks} approval and access-control checks passed on migrations 001 through 008.`)
+console.log(`${checks} approval and access-control checks passed, including the product workflow migration.`)
 await db.close()

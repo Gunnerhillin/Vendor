@@ -29,6 +29,7 @@ await db.exec(readFileSync(new URL('supabase/migrations/008_catalog_launch.sql',
 await db.exec(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;`)
 await db.exec(readFileSync(new URL('supabase/migrations/009_payment_events.sql',root),'utf8'))
+await db.exec(readFileSync(new URL('supabase/migrations/010_product_workflow.sql',root),'utf8'))
 await db.exec('GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
 
 const owner='00000000-0000-0000-0000-000000000001'
