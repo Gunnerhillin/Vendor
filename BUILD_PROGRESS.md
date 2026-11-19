@@ -67,3 +67,13 @@ Read this file, git status/log, and latest tests. Continue unfinished items; do 
 5. Fix or explicitly disable flash deal/coupon execution; add launch config editor and per-brand commercial terms confirmation.
 6. Fix vendor dashboard order summaries still using parent-order joins; smoke-test safe public view embedding and private media on staging.
 7. Full two-vendor Stripe sandbox checkout, webhook retry/expiry, return/refund, transfer/reversal and email delivery tests; then coordinated database/main/Vercel deployment. Live checkout remains gated by server env and launch_config.
+
+
+## Partner guide and notifications checkpoint — November 19
+- Published independent guide release to main: 32782f2. Only public/guide/index.html and admin navigation were included. Share URL: https://www.cutievalley.com/guide/index.html. No privilege changes; public guide contains no private account data and management links retain existing authorization.
+- Guide includes 28 steps across start/customer/vendor/admin, 20 quick links, troubleshooting, glossary, browser-local checkmarks, copy link and print support. Explicitly distinguishes currently live functionality from development-branch work. Link targets checked against source; browser verified progress persists on reload/reset and phone layout has no horizontal overflow.
+- Development only: 014_notification_delivery.sql, notification dispatcher and admin-only /api/admin/notifications. Five-job batches; immutable recipient/content snapshot; stable provider idempotency key; retry backoff and 23-hour cutoff for ambiguous delivery. Provider acceptance is not inbox delivery. No real emails sent and no sender verified in this session.
+- Launch setup now links walkthrough and offers admin-triggered reserved-payment recovery / queued notification processing. These operational controls are not on main yet.
+- 10 notification unit checks and 3 queue claim/cutoff checks added; database suite now 32 checkout/fulfillment/return/queue checks. Type checking passes. Refund execution/transfers remain the next major work item; no money moved.
+
+- Verification: Vercel production 32782f2 is Ready; the public guide loaded successfully on www.cutievalley.com. Screenshot saved to outputs/partner-guide-live.jpg. Full development production build passed (67 generated pages).

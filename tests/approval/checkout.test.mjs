@@ -34,7 +34,7 @@ await db.exec(readFileSync(new URL('supabase/migrations/010_product_workflow.sql
 await db.exec('GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
 
 
-for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
+for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql','014_notification_delivery.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
 
 const buyer='00000000-0000-0000-0000-000000000001'
 const seller='00000000-0000-0000-0000-000000000002'
@@ -99,5 +99,10 @@ await db.query(`SELECT decide_return($1,'approved','Return instructions supplied
 await equal('SELECT return_status FROM order_items WHERE id=$1','approved',[item])
 await denied(()=>db.query(`SELECT decide_return($1,'denied','Changed mind')`,[ret.id]))
 await denied(()=>db.query(`SELECT receive_return($1,'Arrived intact')`,[ret.id]))
+await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub','',false); SET ROLE service_role`)
+await equal('SELECT count(*)::int FROM claim_notifications(1)',1)
+await equal("SELECT count(*)::int FROM notification_outbox WHERE status='sending'",1)
+await db.exec(`UPDATE notification_outbox SET status='failed',first_attempt_at=now()-interval '24 hours'`)
+await equal('SELECT count(*)::int FROM claim_notifications(20)',0)
 console.log(`${checks} checkout and fulfillment checks passed`)
 await db.close()
