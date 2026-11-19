@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
   }
   if (!allowed && bucket === 'vendor-assets' && ['vendor-logo', 'vendor-banner'].includes(segments[0])) {
     const field = segments[0] === 'vendor-logo' ? 'logo_url' : 'banner_url'
-    const { data } = await session.from('vendors').select('id').eq(field, url).eq('status', 'approved').limit(1)
+    const { data } = await session.from('vendor_directory').select('id').eq(field, url).eq('status', 'approved').limit(1)
     allowed = !!data?.length
   }
   if (!allowed) return new NextResponse(null, { status: 404 })

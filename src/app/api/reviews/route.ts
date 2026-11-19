@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerSupabaseClient()
     const { data, error } = await supabase
       .from('reviews')
-      .select('id, product_id, customer_id, rating, comment, created_at, customer:profiles(full_name, avatar_url)')
+      .select('id, product_id, customer_id, rating, comment, created_at, customer:public_profiles(full_name, avatar_url)')
       .eq('product_id', productId)
       .order('created_at', { ascending: false })
 

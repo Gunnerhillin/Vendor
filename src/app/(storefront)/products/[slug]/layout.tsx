@@ -8,7 +8,7 @@ export async function generateMetadata({ params }: { params: { slug: string } })
 
   const { data: products } = await supabase
     .from('products')
-    .select('title, description, price, images:product_images(url, alt, sort_order), vendor:vendors(business_name)')
+    .select('title, description, price, images:product_images(url, alt, sort_order), vendor:vendor_directory(business_name)')
     .eq('slug', params.slug)
     .eq('status', 'approved')
     .limit(1)

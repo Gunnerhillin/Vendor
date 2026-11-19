@@ -56,7 +56,7 @@ export default function AccountOrdersPage() {
 
       const { data } = await supabase
         .from("orders")
-        .select("*, items:order_items(*, product:products(title, slug, images:product_images(url)), vendor:vendors(business_name))")
+        .select("*, items:order_items(*, product:products(title, slug, images:product_images(url)), vendor:vendor_directory(business_name))")
         .eq("customer_id", user.id)
         .order("created_at", { ascending: false })
 

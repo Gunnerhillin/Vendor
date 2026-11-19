@@ -35,7 +35,7 @@ export default function CategoryPage() {
 
     let q = supabase
       .from('products')
-      .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+      .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
       .eq('category_id', cat.id)
       .eq('status', 'approved')
 

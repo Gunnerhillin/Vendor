@@ -1,6 +1,6 @@
 # CutieValley launch build — resume here
 
-Updated: November 7, 2026 (America/Denver).
+Updated: November 19, 2026 (America/Denver).
 
 ## Authorization and boundaries
 User requested implementation of all launch-flow steps and durable progress notes. Earlier main deployment is c7ce10e. Preserve Next.js 14 / React 18 / Supabase / Stripe. Do not expose or commit credentials. No real charges, refunds, transfers, or merchant policy promises during development. Stripe browser access was blocked; do not bypass that restriction. User can complete account configuration when needed.
@@ -30,7 +30,7 @@ User requested implementation of all launch-flow steps and durable progress note
 8. TODO: two-vendor end-to-end sandbox order, failure/retry/expiry, partial/full refund, payout and notification tests; coordinated deployment.
 
 ## Unresolved business/configuration inputs
-- Asked user: shipping included in vendor prices versus separate per-vendor shipping charges; admin-reviewed payouts versus scheduled cycle. Await response.
+- CONFIRMED: shipping included in vendor prices; admin-reviewed payouts after delivery.
 - Commission, return window, support email/company details remain unconfirmed. Build configurable settings; keep real checkout gated until confirmed.
 - Stripe live/test keys, endpoint signing secret, event subscriptions and tax setup need verified configuration. Do not assume presence means correct value.
 - Resend sender/domain configuration and actual delivery need testing. EasyPost is not ready; manual vendor-provided tracking is first-launch path unless user chooses otherwise.
@@ -40,3 +40,30 @@ Checkout currently creates a PaymentIntent then reports success without confirmi
 
 ## Resume procedure
 Read this file, git status/log, and latest tests. Continue unfinished items; do not repeat deployed migrations. Update this file at each tested milestone with files, commands, outcome, remaining gaps and deployment state. Never describe all launch work as complete until external integration tests and policy decisions are resolved.
+
+
+## November 19 checkpoint — local implementation, NOT deployed
+- Migrations 011–013 added; tested in isolated PGlite only. Do not deploy code without coordinating these migrations and completing the outstanding gates below.
+- Hosted Checkout API now reserves authoritative prices/quantities; idempotent per-customer keys, stock release only from verified expired Stripe sessions, server payment verification, tax allocation and notification intents. Checkout UI redirects to Stripe and polls verified status; persistent cart consumes paid quantities once. Shipping included; automatic Stripe tax configured in code but account tax configuration is unverified.
+- Private profile/vendor tables now have public safe-field views. Storefront queries switched to views; actual PostgREST view relationship inference needs a staging smoke test.
+- Vendor fulfillment uses authenticated locked database functions, full address visibility scoped to own paid items, carrier/tracking validation, all-brand parent status aggregation. Separate admin delivery verification does not transfer money.
+- Returns create/decide/receive functions are atomic, enforce owner/vendor/admin permissions and configured window. Receipt neither refunds nor automatically restocks merchandise.
+- Disabled unsafe legacy shipping purchase/lookup and anonymous email routes (410). Removed shipping-token settings and automatic-integration promises. Existing vendor approval email route remains admin-only; unconfigured email no longer returns false success.
+- Admin-only `/api/admin/operations` can reconcile up to 20 linked reserved sessions. No scheduler or UI control wired yet. Unlinked Stripe sessions after an interrupted creation need explicit recovery design; never blindly release their stock.
+- Added a durable notification outbox table and claim function; dispatcher still NOT implemented. Consequently order/fulfillment/return emails are queued but not sent by this branch.
+
+### Validation at this checkpoint
+- 29 approval/access checks, 31 legacy payment checks, 31 product workflow checks.
+- 29 new checkout/fulfillment/return database checks.
+- 6 webhook signature checks, 15 webhook routing/retry checks, 9 product API checks (150 total).
+- `npm run build` passed (66 pages generated). Subsequent vendor settings cleanup and webhook test updates passed `npx tsc --noEmit`; rerun final build before deployment.
+- No live charges, refunds, transfers, emails, migrations, or production deployment performed for this checkpoint.
+
+### Next implementation work (not optional launch checks)
+1. Expand multi-brand/race and API-level Checkout tests; harden request validation and recover orphan reservations without overselling. Add scheduled reconciliation and visible recovery UI.
+2. Build durable email dispatcher with immutable recipient/content snapshots, retries, provider idempotency and clear admin errors. Lock down remaining abuse surfaces.
+3. Build refund execution/reconciliation and admin-reviewed transfers after verified delivery, with durable operation IDs, refund/transfer interlocks and transfer reversal handling. Current payout records are still accounting only; returns cannot be marked refunded from UI.
+4. Wire return receipt UI; enforce publishable return terms/commission settings; remove old conflicting default policy promises. Add real company/support info once provided.
+5. Fix or explicitly disable flash deal/coupon execution; add launch config editor and per-brand commercial terms confirmation.
+6. Fix vendor dashboard order summaries still using parent-order joins; smoke-test safe public view embedding and private media on staging.
+7. Full two-vendor Stripe sandbox checkout, webhook retry/expiry, return/refund, transfer/reversal and email delivery tests; then coordinated database/main/Vercel deployment. Live checkout remains gated by server env and launch_config.

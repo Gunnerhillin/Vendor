@@ -1,0 +1,103 @@
+import { PGlite } from '@electric-sql/pglite'
+import { readFileSync } from 'node:fs'
+import assert from 'node:assert/strict'
+process.on('uncaughtException', e => { console.error(e.message, e.where || '', e.query || ''); process.exit(1) })
+const db = new PGlite()
+const root = new URL('../../', import.meta.url)
+await db.exec(`CREATE ROLE authenticated; CREATE ROLE anon; CREATE ROLE service_role BYPASSRLS;
+CREATE SCHEMA auth;
+CREATE TABLE auth.users(id uuid PRIMARY KEY, email text, raw_user_meta_data jsonb);
+CREATE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS
+$$ SELECT nullif(current_setting('request.jwt.claim.sub', true), '')::uuid $$;
+CREATE FUNCTION auth.role() RETURNS text LANGUAGE sql STABLE AS $$ SELECT current_user::text $$;
+GRANT USAGE ON SCHEMA auth, public TO authenticated, anon;
+GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, anon;`)
+let schema=readFileSync(new URL('supabase/migrations/001_initial_schema.sql',root),'utf8')
+schema=schema.replace('CREATE EXTENSION IF NOT EXISTS "uuid-ossp";', '').replaceAll('uuid_generate_v4()', 'gen_random_uuid()')
+await db.exec(schema)
+for (const file of ['002_tracking_and_newsletter.sql','003_coupons.sql','004_vendor_location.sql','005_shipping_returns.sql','006_flash_deals.sql']) {
+  await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8').replaceAll('uuid_generate_v4()', 'gen_random_uuid()'))
+}
+await db.exec(`CREATE SCHEMA storage;
+CREATE TABLE storage.buckets(id text PRIMARY KEY,name text,public boolean,file_size_limit bigint,allowed_mime_types text[]);
+CREATE TABLE storage.objects(id uuid DEFAULT gen_random_uuid(),bucket_id text,name text);
+ALTER TABLE storage.objects ENABLE ROW LEVEL SECURITY;
+CREATE FUNCTION storage.foldername(text) RETURNS text[] LANGUAGE sql IMMUTABLE AS $$ SELECT string_to_array($1,'/') $$;
+GRANT USAGE ON SCHEMA storage TO authenticated;
+GRANT SELECT,INSERT,UPDATE,DELETE ON storage.objects TO authenticated;`)
+await db.exec(readFileSync(new URL('supabase/migrations/007_approval_workflows.sql',root),'utf8'))
+await db.exec(readFileSync(new URL('supabase/migrations/008_catalog_launch.sql',root),'utf8'))
+await db.exec(`GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO anon;`)
+await db.exec(readFileSync(new URL('supabase/migrations/009_payment_events.sql',root),'utf8'))
+await db.exec(readFileSync(new URL('supabase/migrations/010_product_workflow.sql',root),'utf8'))
+await db.exec('GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
+
+
+for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
+
+const buyer='00000000-0000-0000-0000-000000000001'
+const seller='00000000-0000-0000-0000-000000000002'
+await db.query(`INSERT INTO auth.users VALUES ($1,'buyer@example.invalid','{}'),($2,'seller@example.invalid','{}')`,[buyer,seller])
+const vendor=(await db.query(`INSERT INTO vendors(user_id,business_name,slug,status,stripe_onboarding_complete,stripe_account_id) VALUES ($1,'Brand','brand','approved',true,'acct_test') RETURNING id`,[seller])).rows[0].id
+const product=(await db.query(`INSERT INTO products(category_id,vendor_id,title,slug,price,status,inventory_count) VALUES ((SELECT id FROM categories LIMIT 1),$1,'Item','item',10,'approved',10) RETURNING id`,[vendor])).rows[0].id
+const cart=[{product_id:product,variant_id:null,quantity:2}]
+const key='00000000-0000-0000-0000-000000000003'
+let checks=0
+async function equal(sql,value,params=[]) {assert.equal(Object.values((await db.query(sql,params)).rows[0])[0],value);checks++}
+async function denied(fn) {await assert.rejects(fn);checks++}
+async function reserve(k=key,c=cart,live=false) {return (await db.query('SELECT reserve_checkout($1,$2,$3,$4,$5) result',[buyer,k,JSON.stringify(c),'buyer@example.invalid',live])).rows[0].result}
+await db.exec('SET ROLE service_role')
+await denied(()=>reserve())
+await db.exec(`RESET ROLE; UPDATE site_settings SET value=jsonb_set(value,'{checkout_mode}','"test"') WHERE key='launch_config'; SET ROLE service_role`)
+await denied(()=>reserve(key,cart,true))
+const first=await reserve()
+assert.equal((await reserve()).order.id,first.order.id);checks++
+await equal('SELECT inventory_count FROM products WHERE id=$1',8,[product])
+await denied(()=>reserve(key,[{...cart[0],quantity:3}]))
+await denied(()=>reserve('00000000-0000-0000-0000-000000000004',[{...cart[0],quantity:9}]))
+await equal('SELECT inventory_count FROM products WHERE id=$1',8,[product])
+await db.query(`UPDATE orders SET checkout_session_id='cs_one' WHERE id=$1`,[first.order.id])
+await denied(()=>db.query(`SELECT release_checkout($1,'cs_wrong')`,[first.order.id]))
+await db.exec(`RESET ROLE; UPDATE vendors SET status='rejected' WHERE id='${vendor}'; SET ROLE service_role`)
+await db.query(`SELECT release_checkout($1,'cs_one')`,[first.order.id])
+await db.query(`SELECT release_checkout($1,'cs_one')`,[first.order.id])
+await equal('SELECT inventory_count FROM products WHERE id=$1',10,[product])
+await db.exec(`RESET ROLE; UPDATE vendors SET status='approved' WHERE id='${vendor}'; SET ROLE service_role`)
+const second=await reserve('00000000-0000-0000-0000-000000000005')
+await db.query(`UPDATE orders SET checkout_session_id='cs_two' WHERE id=$1`,[second.order.id])
+const address=JSON.stringify({name:'Test',line1:'123 Test',city:'Denver',state:'CO',postal_code:'80202',country:'US'})
+async function complete(total=2100) {return db.query(`SELECT complete_checkout('evt_one',$1,'cs_two','pi_two','ch_two',2000,$2,100,'usd',$3)`,[second.order.id,total,address])}
+await denied(()=>complete(2200))
+await complete();await complete()
+await db.query(`SELECT release_checkout($1,'cs_two')`,[second.order.id])
+await equal('SELECT inventory_count FROM products WHERE id=$1',8,[product])
+await equal('SELECT count(*)::int FROM payouts WHERE order_id=$1',1,[second.order.id])
+await equal('SELECT count(*)::int FROM notification_outbox WHERE order_id=$1',2,[second.order.id])
+await db.exec(`RESET ROLE; SET ROLE anon`)
+await equal('SELECT count(*)::int FROM vendors',0)
+await equal('SELECT count(*)::int FROM profiles',0)
+await equal('SELECT count(*)::int FROM vendor_directory',1)
+await equal('SELECT count(*)::int FROM products',1)
+await denied(()=>db.query(`SELECT reserve_checkout($1,$2,$3,$4,false)`,[buyer,key,JSON.stringify(cart),'buyer@example.invalid']))
+await db.exec(`RESET ROLE; SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${seller}',false)`)
+await equal(`SELECT jsonb_array_length(vendor_fulfillment_orders())`,1)
+const item=second.items[0].id
+await denied(()=>db.query(`SELECT update_fulfillment($1,'delivered')`,[item]))
+await denied(()=>db.query(`SELECT update_fulfillment($1,'shipped','x','usps')`,[item]))
+await db.query(`SELECT update_fulfillment($1,'shipped','TRACK1234','usps')`,[item])
+await db.query(`SELECT update_fulfillment($1,'delivered')`,[item])
+await equal('SELECT delivery_confirmed_at FROM order_items WHERE id=$1',null,[item])
+await db.exec(`SELECT set_config('request.jwt.claim.sub','${buyer}',false)`)
+await denied(()=>db.query(`SELECT update_fulfillment($1,'shipped','TRACKX','ups')`,[item]))
+const ret=(await db.query(`SELECT to_jsonb(request_return($1,'Does not fit','Unused with tags')) r`,[item])).rows[0].r
+await denied(()=>db.query(`SELECT request_return($1,'Does not fit','Unused')`,[item]))
+await equal('SELECT return_status FROM order_items WHERE id=$1','requested',[item])
+await denied(()=>db.query(`SELECT decide_return($1,'approved',null)`,[ret.id]))
+await db.exec(`SELECT set_config('request.jwt.claim.sub','${seller}',false)`)
+await db.query(`SELECT decide_return($1,'approved','Return instructions supplied')`,[ret.id])
+await equal('SELECT return_status FROM order_items WHERE id=$1','approved',[item])
+await denied(()=>db.query(`SELECT decide_return($1,'denied','Changed mind')`,[ret.id]))
+await denied(()=>db.query(`SELECT receive_return($1,'Arrived intact')`,[ret.id]))
+console.log(`${checks} checkout and fulfillment checks passed`)
+await db.close()

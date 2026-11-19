@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         created_at,
         updated_at,
         images:product_images(id, url, alt, sort_order),
-        vendor:vendors(id, business_name, slug, logo_url)
+        vendor:vendor_directory(id, business_name, slug, logo_url)
       )
     `
       )

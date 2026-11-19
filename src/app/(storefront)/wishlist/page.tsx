@@ -30,7 +30,7 @@ export default function WishlistPage() {
           product:products(
             id, title, slug, price, compare_at_price, inventory_count, status,
             images:product_images(url, alt, sort_order),
-            vendor:vendors(business_name, slug)
+            vendor:vendor_directory(business_name, slug)
           )
         `)
         .eq('customer_id', user.id)

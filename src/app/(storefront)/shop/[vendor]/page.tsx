@@ -19,7 +19,7 @@ export default function VendorStorefrontPage() {
       const supabase = createClient()
 
       const { data: v } = await supabase
-        .from('vendors')
+        .from('vendor_directory')
         .select('*')
         .eq('slug', vendorSlug)
         .eq('status', 'approved')
@@ -30,7 +30,7 @@ export default function VendorStorefrontPage() {
 
         const { data: prods } = await supabase
           .from('products')
-          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
           .eq('vendor_id', v.id)
           .eq('status', 'approved')
           .order('created_at', { ascending: false })

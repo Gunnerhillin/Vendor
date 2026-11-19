@@ -13,6 +13,7 @@ const sandbox = { exports: {}, process: { env: {} }, console,
     if (name === 'next/server') return { NextResponse: { json: (body, options) => ({ body, status: options?.status || 200 }) } }
     if (name === '@/lib/stripe') return { stripe }
     if (name === '@/lib/supabase/server') return { createServiceRoleClient: async () => { calls++; return {} } }
+    if(name==='@/lib/checkout') return {reconcileCheckout:async()=>{throw new Error('Unexpected checkout processing')}}
     throw new Error(name)
   }
 }

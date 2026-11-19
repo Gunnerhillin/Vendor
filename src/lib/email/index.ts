@@ -31,8 +31,8 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
       })
 
       if (!res.ok) {
-        const error = await res.text()
-        console.error('Resend API error:', error)
+        // Do not log recipient data or provider response bodies.
+        console.error('Email provider rejected delivery')
         return false
       }
 
@@ -43,12 +43,8 @@ export async function sendEmail({ to, subject, html }: SendEmailOptions): Promis
     }
   }
 
-  // Dev mode: log to console
-  console.log('=== EMAIL (dev mode) ===')
-  console.log(`To: ${to}`)
-  console.log(`Subject: ${subject}`)
-  console.log('========================')
-  return true
+  return false // Missing delivery configuration is not a successful send.
+
 }
 
 // =============================================

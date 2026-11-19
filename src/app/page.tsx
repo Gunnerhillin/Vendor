@@ -56,7 +56,7 @@ export default function HomePage() {
       // Trending (most sold)
       const { data: trendingData, error: trendingError } = await supabase
         .from('products')
-        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
         .eq('status', 'approved')
         .order('sold_count', { ascending: false })
         .limit(4)
@@ -66,13 +66,13 @@ export default function HomePage() {
       // New arrivals
       const { data: newData } = await supabase
         .from('products')
-        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
         .limit(8)
 
       if (newData) setNewArrivals(newData as any)
-      const { data: brand } = await supabase.from('vendors')
+      const { data: brand } = await supabase.from('vendor_directory')
         .select('slug, business_name, description, logo_url, banner_url')
         .eq('status', 'approved').eq('is_featured', true).order('approved_at').limit(1).maybeSingle()
       if (brand) setFeatured(brand)

@@ -19,7 +19,7 @@ export default function ShopLocalPage() {
 
       // Fetch local vendors
       const { data: localVendors } = await supabase
-        .from('vendors')
+        .from('vendor_directory')
         .select('*')
         .eq('is_local', true)
         .eq('status', 'approved')
@@ -32,7 +32,7 @@ export default function ShopLocalPage() {
         const vendorIds = localVendors.map(v => v.id)
         const { data: localProducts } = await supabase
           .from('products')
-          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug, is_local)')
+          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug, is_local)')
           .in('vendor_id', vendorIds)
           .eq('status', 'approved')
           .order('created_at', { ascending: false })

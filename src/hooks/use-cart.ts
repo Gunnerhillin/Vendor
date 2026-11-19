@@ -1,8 +1,11 @@
 import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
 import type { Product, ProductVariant, CartItem } from '@/types'
 
 interface CartState {
   items: CartItem[]
+  completedOrders: string[]
+  consumeOrder: (orderId: string, cart: { product_id: string; variant_id: string | null; quantity: number }[]) => void
   isOpen: boolean
   addItem: (product: Product, variant: ProductVariant | null, quantity?: number) => void
   removeItem: (productId: string, variantId: string | null) => void
@@ -13,8 +16,16 @@ interface CartState {
   itemCount: () => number
 }
 
-export const useCart = create<CartState>((set, get) => ({
+export const useCart = create<CartState>()(persist((set, get) => ({
   items: [],
+  completedOrders: [],
+  consumeOrder: (orderId, cart) => set(state => {
+    if (state.completedOrders.includes(orderId)) return state
+    return {
+      completedOrders: [...state.completedOrders, orderId],
+      items: state.items.map(item => ({ ...item, quantity: item.quantity - cart.filter(line => line.product_id === item.product.id && line.variant_id === (item.variant?.id || null)).reduce((sum, line) => sum + line.quantity, 0) })).filter(item => item.quantity > 0),
+    }
+  }),
   isOpen: false,
 
   addItem: (product, variant, quantity = 1) => {
@@ -38,7 +49,7 @@ export const useCart = create<CartState>((set, get) => ({
   removeItem: (productId, variantId) => {
     set((state) => ({
       items: state.items.filter(
-        (i) => !(i.product.id === productId && i.variant?.id === variantId)
+        (i) => !(i.product.id === productId && (i.variant?.id || null) === variantId)
       ),
     }))
   },
@@ -50,7 +61,7 @@ export const useCart = create<CartState>((set, get) => ({
     }
     set((state) => ({
       items: state.items.map((i) =>
-        i.product.id === productId && i.variant?.id === variantId
+        i.product.id === productId && (i.variant?.id || null) === variantId
           ? { ...i, quantity }
           : i
       ),
@@ -70,4 +81,4 @@ export const useCart = create<CartState>((set, get) => ({
   itemCount: () => {
     return get().items.reduce((sum, item) => sum + item.quantity, 0)
   },
-}))
+}), { name: 'cutievalley-cart', skipHydration: true, partialize: state => ({ items: state.items, completedOrders: state.completedOrders }) }))
