@@ -8,6 +8,7 @@ import { LayoutDashboard, Store, Package, ShoppingCart, DollarSign, BarChart3, U
 import { createClient } from "@/lib/supabase/client"
 
 const links = [
+  { href: "/guide/index.html", label: "Partner Walkthrough", icon: Store },
   { href: "/admin/launch", label: "Launch Setup", icon: Store },
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/vendors", label: "Vendors", icon: Store },
