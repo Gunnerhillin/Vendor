@@ -22,6 +22,7 @@ const sandbox={exports:{},process:{env:{STRIPE_WEBHOOK_SECRET:secret}},console:{
  if(name==='@/lib/stripe')return {stripe}
  if(name==='@/lib/supabase/server')return {createServiceRoleClient:async()=>db}
  if(name==='@/lib/checkout')return {reconcileCheckout:async (session,event)=>{if(fail)throw new Error('Recovery failure');reconciled.push({session,event})}}
+ if(name==='@/lib/financial-operations')return {reconcileManagedRefund:async()=>false}
  throw new Error(name)
 }}
 vm.runInNewContext(source,sandbox)

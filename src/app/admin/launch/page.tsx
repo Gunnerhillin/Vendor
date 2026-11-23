@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import LaunchConfiguration from '@/components/admin/LaunchConfiguration'
 import { createClient } from '@/lib/supabase/client'
 
 export default function LaunchSetup() {
@@ -56,6 +57,7 @@ export default function LaunchSetup() {
         {vendors.filter(v => v.status === 'approved').map(v => <option key={v.id} value={v.id}>{v.business_name}</option>)}
       </select>
     </section>
+    <LaunchConfiguration />
     <p role="status" className="text-sm">{notice}</p>
   </div>
 }

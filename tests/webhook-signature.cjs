@@ -14,7 +14,8 @@ const sandbox = { exports: {}, process: { env: {} }, console,
     if (name === '@/lib/stripe') return { stripe }
     if (name === '@/lib/supabase/server') return { createServiceRoleClient: async () => { calls++; return {} } }
     if(name==='@/lib/checkout') return {reconcileCheckout:async()=>{throw new Error('Unexpected checkout processing')}}
-    throw new Error(name)
+    if(name==='@/lib/financial-operations')return {reconcileManagedRefund:async()=>false}
+ throw new Error(name)
   }
 }
 vm.runInNewContext(source, sandbox)

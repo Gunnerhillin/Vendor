@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { createServiceRoleClient } from '@/lib/supabase/server'
 import { reconcileCheckout } from '@/lib/checkout'
+import { reconcileManagedRefund } from '@/lib/financial-operations'
 import type Stripe from 'stripe'
 
 export async function POST(request: NextRequest) {
@@ -63,7 +64,8 @@ export async function POST(request: NextRequest) {
         const paymentId = typeof charge.payment_intent === 'string' ? charge.payment_intent : charge.payment_intent?.id
         if (!paymentId) break
         let succeeded = 0
-        await stripe.refunds.list({ charge: charge.id, limit: 100 }).autoPagingEach(refund => {
+        await stripe.refunds.list({ charge: charge.id, limit: 100 }).autoPagingEach(async refund => {
+          if(refund.metadata?.operation_id) await reconcileManagedRefund(refund)
           if (refund.status === 'succeeded') succeeded += refund.amount
         })
         await processPayment('charge.refunded', paymentId, charge.amount, succeeded, charge.currency)

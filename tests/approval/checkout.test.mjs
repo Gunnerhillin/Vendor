@@ -34,7 +34,7 @@ await db.exec(readFileSync(new URL('supabase/migrations/010_product_workflow.sql
 await db.exec('GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
 
 
-for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql','014_notification_delivery.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
+for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql','014_notification_delivery.sql','015_financial_operations.sql','016_launch_configuration.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
 
 const buyer='00000000-0000-0000-0000-000000000001'
 const seller='00000000-0000-0000-0000-000000000002'
@@ -104,5 +104,86 @@ await equal('SELECT count(*)::int FROM claim_notifications(1)',1)
 await equal("SELECT count(*)::int FROM notification_outbox WHERE status='sending'",1)
 await db.exec(`UPDATE notification_outbox SET status='failed',first_attempt_at=now()-interval '24 hours'`)
 await equal('SELECT count(*)::int FROM claim_notifications(20)',0)
+
+await db.exec(`RESET ROLE; UPDATE profiles SET role='admin' WHERE id='${buyer}'; SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${seller}',false)`)
+const payout=(await db.query(`SELECT id FROM payouts WHERE order_id=$1`,[second.order.id])).rows[0].id
+await denied(()=>db.query(`SELECT prepare_financial_operation('transfer',$1)`,[payout]))
+await db.exec(`SELECT set_config('request.jwt.claim.sub','${buyer}',false)`)
+await denied(()=>db.query(`SELECT prepare_financial_operation('refund',$1)`,[ret.id]))
+await db.query(`SELECT receive_return($1,'All units received unused with tags')`,[ret.id])
+const refundOp=(await db.query(`SELECT to_jsonb(prepare_financial_operation('refund',$1)) f`,[ret.id])).rows[0].f
+assert.equal(refundOp.amount_cents,2100);checks++
+assert.equal((await db.query(`SELECT to_jsonb(prepare_financial_operation('refund',$1)) f`,[ret.id])).rows[0].f.id,refundOp.id);checks++
+await denied(()=>db.query(`SELECT prepare_financial_operation('transfer',$1)`,[payout]))
+await denied(()=>db.query(`SELECT finish_financial_operation($1,'re_test')`,[refundOp.id]))
+await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub','',false); SET ROLE service_role`)
+await db.query(`SELECT finish_financial_operation($1,'re_test')`,[refundOp.id]);await db.query(`SELECT finish_financial_operation($1,'re_test')`,[refundOp.id])
+await equal(`SELECT status FROM return_requests WHERE id=$1`,'completed',[ret.id])
+await equal(`SELECT amount::text FROM payouts WHERE id=$1`,'0.00',[payout])
+await equal(`SELECT inventory_count FROM products WHERE id=$1`,8,[product])
+await denied(()=>db.query(`SELECT finish_financial_operation($1,'re_other')`,[refundOp.id]))
+const third=await reserve('00000000-0000-0000-0000-000000000006')
+await db.query(`UPDATE orders SET checkout_session_id='cs_three' WHERE id=$1`,[third.order.id])
+await db.query(`SELECT complete_checkout('evt_three',$1,'cs_three','pi_three','ch_three',2000,2100,100,'usd',$2)`,[third.order.id,address])
+const payout3=(await db.query(`SELECT id FROM payouts WHERE order_id=$1`,[third.order.id])).rows[0].id
+await db.exec(`RESET ROLE; SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${buyer}',false)`)
+await denied(()=>db.query(`SELECT prepare_financial_operation('transfer',$1)`,[payout3]))
+await db.query(`UPDATE vendors SET commercial_terms_confirmed=true WHERE id=$1`,[vendor])
+await denied(()=>db.query(`SELECT prepare_financial_operation('transfer',$1)`,[payout3]))
+await db.query(`SELECT update_fulfillment($1,'shipped','TRACKTHREE','usps')`,[third.items[0].id])
+await db.query(`SELECT update_fulfillment($1,'delivered')`,[third.items[0].id])
+const transferOp=(await db.query(`SELECT to_jsonb(prepare_financial_operation('transfer',$1)) f`,[payout3])).rows[0].f
+assert.equal(transferOp.amount_cents,1500);checks++
+await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub','',false); SET ROLE service_role`)
+await db.query(`SELECT finish_financial_operation($1,'tr_test')`,[transferOp.id]);await db.query(`SELECT finish_financial_operation($1,'tr_test')`,[transferOp.id])
+await equal(`SELECT stripe_transfer_id FROM payouts WHERE id=$1`,'tr_test',[payout3])
+await db.exec(`RESET ROLE; SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${buyer}',false)`)
+const return3=(await db.query(`SELECT to_jsonb(request_return($1,'Does not fit','Unused')) r`,[third.items[0].id])).rows[0].r
+await db.query(`SELECT decide_return($1,'approved','Return all units')`,[return3.id]);await db.query(`SELECT receive_return($1,'All units received in good condition')`,[return3.id])
+const refund3=(await db.query(`SELECT to_jsonb(prepare_financial_operation('refund',$1)) f`,[return3.id])).rows[0].f
+assert.equal(refund3.transfer_id,'tr_test');checks++
+assert.equal(refund3.vendor_cents,1500);checks++
+await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub','',false); SET ROLE service_role`)
+await denied(()=>db.query(`SELECT finish_financial_operation($1,'re_after_transfer')`,[refund3.id]))
+await db.query(`UPDATE financial_operations SET reversal_id='trr_test' WHERE id=$1`,[refund3.id])
+await db.query(`SELECT finish_financial_operation($1,'re_after_transfer')`,[refund3.id])
+await equal(`SELECT reversed_cents::int FROM payouts WHERE id=$1`,1500,[payout3])
+await equal(`SELECT refunded_amount_cents::int FROM orders WHERE id=$1`,2100,[third.order.id])
+
+await db.exec(`RESET ROLE; SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${seller}',false)`)
+await denied(()=>db.query(`SELECT save_launch_configuration('{}')`))
+await denied(()=>db.query(`SELECT confirm_vendor_terms($1,20)`,[vendor]))
+await db.exec(`SELECT set_config('request.jwt.claim.sub','${buyer}',false)`)
+await denied(()=>db.query(`SELECT save_launch_configuration('{"checkout_mode":"live","return_window_days":30,"policies_confirmed":false}')`))
+await denied(()=>db.query(`SELECT confirm_vendor_terms($1,100)`,[vendor]))
+await db.query(`SELECT save_launch_configuration($1)`,[JSON.stringify({checkout_mode:'test',return_window_days:14,policies_confirmed:true,company_name:'Test Company',support_email:'support@example.invalid',return_condition:'Unused items in original packaging with tags.'})])
+await equal(`SELECT (value->>'window_days')::int FROM site_settings WHERE key='return_policy'`,14)
+await db.query(`SELECT confirm_vendor_terms($1,20)`,[vendor])
+await equal(`SELECT commission_rate::text FROM vendors WHERE id=$1`,'0.2000',[vendor])
+
+await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub','',false)`)
+const sellerTwo='00000000-0000-0000-0000-000000000099'
+await db.query(`INSERT INTO auth.users VALUES($1,'secondbrand@example.invalid','{}')`,[sellerTwo])
+const vendorTwo=(await db.query(`INSERT INTO vendors(user_id,business_name,slug,status,stripe_onboarding_complete,stripe_account_id,commercial_terms_confirmed) VALUES($1,'Second Brand','second-brand','approved',true,'acct_two',true) RETURNING id`,[sellerTwo])).rows[0].id
+const productTwo=(await db.query(`INSERT INTO products(vendor_id,category_id,title,slug,price,status,inventory_count) VALUES($1,(SELECT id FROM categories LIMIT 1),'Second item','second-item',15,'approved',10) RETURNING id`,[vendorTwo])).rows[0].id
+await db.exec('SET ROLE service_role')
+const mixed=await reserve('00000000-0000-0000-0000-000000000007',[{product_id:product,variant_id:null,quantity:1},{product_id:productTwo,variant_id:null,quantity:1}])
+await db.query(`UPDATE orders SET checkout_session_id='cs_mixed' WHERE id=$1`,[mixed.order.id])
+await db.query(`SELECT complete_checkout('evt_mixed',$1,'cs_mixed','pi_mixed','ch_mixed',2500,2625,125,'usd',$2)`,[mixed.order.id,address])
+await equal(`SELECT count(*)::int FROM payouts WHERE order_id=$1`,2,[mixed.order.id])
+await equal(`SELECT sum(tax_cents)::int FROM order_items WHERE order_id=$1`,125,[mixed.order.id])
+const lineOne=mixed.items.find(i=>i.vendor_id===vendor),lineTwo=mixed.items.find(i=>i.vendor_id===vendorTwo)
+await db.exec(`RESET ROLE; SET ROLE authenticated; SELECT set_config('request.jwt.claim.sub','${sellerTwo}',false)`)
+await equal(`SELECT jsonb_array_length(vendor_fulfillment_orders())`,1)
+await denied(()=>db.query(`SELECT update_fulfillment($1,'shipped','WRONGOWNER','ups')`,[lineOne.id]))
+await db.query(`SELECT update_fulfillment($1,'shipped','BRANDTWO','ups')`,[lineTwo.id])
+await db.exec(`SELECT set_config('request.jwt.claim.sub','${buyer}',false)`)
+await equal(`SELECT status FROM orders WHERE id=$1`,'processing',[mixed.order.id])
+await db.query(`SELECT update_fulfillment($1,'shipped','BRANDONE','usps')`,[lineOne.id])
+await equal(`SELECT status FROM orders WHERE id=$1`,'shipped',[mixed.order.id])
+await db.query(`SELECT update_fulfillment($1,'delivered')`,[lineOne.id])
+await equal(`SELECT status FROM orders WHERE id=$1`,'shipped',[mixed.order.id])
+await db.query(`SELECT update_fulfillment($1,'delivered')`,[lineTwo.id])
+await equal(`SELECT status FROM orders WHERE id=$1`,'delivered',[mixed.order.id])
 console.log(`${checks} checkout and fulfillment checks passed`)
 await db.close()

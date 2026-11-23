@@ -10,6 +10,21 @@ export default function AdminPayoutsPage() {
   const [payouts, setPayouts] = useState<any[]>([])
   const [vendors, setVendors] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [notice,setNotice]=useState('')
+  const [busy,setBusy]=useState<string|null>(null)
+  async function transfer(payout:any) {
+    if(!window.confirm(`Transfer ${formatPrice(payout.amount)} to ${payout.vendor?.business_name || 'this brand'}? This moves money to its Stripe account, not directly to its bank. Retrying recovers the same transfer.`)) return
+    setBusy(payout.id);setNotice('')
+    try {
+      const response=await fetch('/api/admin/finance',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({kind:'transfer',targetId:payout.id})})
+      const data=await response.json()
+      if(!response.ok) throw new Error(data.error)
+      setNotice('Stripe confirmed the transfer. Bank payout timing is managed separately by Stripe.')
+      const {data:updated}=await supabase.from('payouts').select('*, vendor:vendors(business_name)').order('created_at',{ascending:false})
+      if(updated)setPayouts(updated)
+    } catch(e) {setNotice(e instanceof Error?e.message:'Unable to confirm transfer')}
+    finally {setBusy(null)}
+  }
 
   useEffect(() => {
     async function fetchPayouts() {
@@ -56,7 +71,7 @@ export default function AdminPayoutsPage() {
           <p className="text-xs text-gray-400 mt-1">{pending.length} vendors awaiting payout</p>
         </div>
         <div className="card p-6">
-          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2"><CheckCircle2 size={16} /> Total Paid</div>
+          <div className="flex items-center gap-2 text-sm text-gray-500 mb-2"><CheckCircle2 size={16} /> Transferred to Stripe</div>
           <p className="text-3xl font-bold">{formatPrice(totalPaid)}</p>
           <p className="text-xs text-gray-400 mt-1">{paid.length} payouts completed</p>
         </div>
@@ -67,6 +82,7 @@ export default function AdminPayoutsPage() {
         </div>
       </div>
 
+      {notice && <p role="status" className="mb-4 text-sm">{notice}</p>}
       {/* All Payouts */}
       <div className="card">
         <div className="flex items-center justify-between p-6 border-b border-warm-border">
@@ -94,7 +110,7 @@ export default function AdminPayoutsPage() {
                     <td className="px-6 py-4 text-sm font-medium">{p.vendor?.business_name || "—"}</td>
                     <td className="px-6 py-4 text-sm font-bold">{formatPrice(p.amount)}{p.reconciliation_required && <p className="text-xs text-red-700">Refund review required</p>}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">{formatDate(p.period_start)} — {formatDate(p.period_end)}</td>
-                    <td className="px-6 py-4"><span className={`badge ${p.status === "paid" ? "badge-success" : p.status === "processing" ? "badge-warning" : "bg-gray-100 text-gray-600"}`}>{p.status}</span></td>
+                    <td className="px-6 py-4"><span className={`badge ${p.status === "paid" ? "badge-success" : p.status === "processing" ? "badge-warning" : "bg-gray-100 text-gray-600"}`}>{p.status === 'paid' ? 'Transferred' : p.status}</span>{p.reversed_cents > 0 && <p className="text-xs">Recovered for refunds: {formatPrice(p.reversed_cents/100)}</p>}{['pending','processing'].includes(p.status) && <button disabled={busy!==null || p.reconciliation_required || Number(p.amount)<=0} onClick={()=>transfer(p)} className="block text-xs underline mt-2 disabled:opacity-50">{busy===p.id ? 'Checking…' : p.status==='processing' ? 'Check existing transfer' : 'Review and transfer'}</button>}</td>
                     <td className="px-6 py-4 text-sm text-gray-500">{p.paid_at ? formatDate(p.paid_at) : formatDate(p.created_at)}</td>
                   </tr>
                 ))}

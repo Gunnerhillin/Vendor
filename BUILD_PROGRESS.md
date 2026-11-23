@@ -1,6 +1,15 @@
 # CutieValley launch build — resume here
 
-Updated: November 19, 2026 (America/Denver).
+Updated: November 23, 2026 (America/Denver).
+
+## Latest checkpoint — November 23, 2026
+Development branch now includes refund/transfer operations (015), launch configuration (016), vendor dashboard repair and dynamic confirmed return policy. None of migrations 011–016 have been deployed. Production remains guide release 32782f2. Live financial operations remain disabled.
+
+Validation: production build passed (68 generated pages); 65 checkout/fulfillment/returns/finance/config/multi-brand database checks, 19 financial provider-mock checks, 10 notification checks, 29 approval, 31 legacy payment, 31 product workflow, 9 product API, 6 webhook signature and 15 webhook routing checks (215 total across current suites). These are local checks, not Stripe end-to-end tests.
+
+New launch UI lets admins enter company/support/return terms, select closed/test/live access, and explicitly confirm each approved brand's agreed commission. No business values were invented or entered into production. Public return policy reads confirmed values and shows a prelaunch message otherwise. Vendor dashboard counts distinct paid orders and no longer joins inaccessible customer profiles.
+
+Next priorities: complete external refund/dispute reconciliation and failed-operation recovery tooling; fix/disable discounts; recover orphan checkout reservations; actual two-brand sandbox payment/refund/transfer/email testing; staging database compatibility and view relationship checks; coordinated deployment. Continue from these priorities instead of rebuilding completed work.
 
 ## Authorization and boundaries
 User requested implementation of all launch-flow steps and durable progress notes. Earlier main deployment is c7ce10e. Preserve Next.js 14 / React 18 / Supabase / Stripe. Do not expose or commit credentials. No real charges, refunds, transfers, or merchant policy promises during development. Stripe browser access was blocked; do not bypass that restriction. User can complete account configuration when needed.
@@ -77,3 +86,13 @@ Read this file, git status/log, and latest tests. Continue unfinished items; do 
 - 10 notification unit checks and 3 queue claim/cutoff checks added; database suite now 32 checkout/fulfillment/return/queue checks. Type checking passes. Refund execution/transfers remain the next major work item; no money moved.
 
 - Verification: Vercel production 32782f2 is Ready; the public guide loaded successfully on www.cutievalley.com. Screenshot saved to outputs/partner-guide-live.jpg. Full development production build passed (67 generated pages).
+
+
+## Financial operations implementation — November 19 (development only)
+- Added 015_financial_operations.sql. Admin-reviewed preparation locks the parent order and payout, snapshots amounts/destination, and serializes outstanding financial operations per order. Customers/vendors cannot prepare transfers or refunds. All active brand items need admin-verified delivery; commercial terms and Stripe readiness must be confirmed; open returns block transfers.
+- Full order-item returns (all quantities on that item) now require approval and documented physical receipt before refund preparation. Refund includes allocated item tax. Inventory is NOT automatically restocked. Receipt UI and financial actions are wired into Admin Returns; payout UI explicitly distinguishes Stripe transfers from bank payouts.
+- Added /api/admin/finance and financial-operations helper. Server creates/retrieves Stripe objects with persistent operation metadata and idempotency keys. Unknown operations older than 23h stop for reconciliation; recovery searches existing provider objects before considering a new request. After-transfer refunds reverse the brand share before refunding; failures keep the operation pending and block conflicting money movement.
+- Managed refund webhooks reconcile item/return/accounting state before the cumulative legacy refund ledger. External/unallocated refunds keep payout reconciliation holds; no guessed allocation. Provider acceptance/pending is not reported as refund success.
+- ENABLE_LIVE_FINANCIAL_OPERATIONS must explicitly be true before live execution. It has NOT been set, and no live or sandbox money-moving calls were executed by the agent.
+- 19 provider-mock checks pass (duplicates, pending refunds, reversal ordering, aged operation recovery, external refund mismatch, live gate); database checkout suite now 51 checks including 19 new financial permission/state/accounting checks. Webhook signature and routing checks pass.
+- Still required: actual Stripe sandbox two-brand checkout/refund/transfer/reversal tests, failed-reversal recovery and external refund/dispute reconciliation tooling, tax reporting verification, UI browser test with fixture orders, production migration compatibility/backup and coordinated deployment. Failed or cancelled Stripe refunds remain pending for explicit reconciliation rather than silently reissuing money. Financial code is not deployed to main.
