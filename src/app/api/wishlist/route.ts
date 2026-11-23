@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       id,
       product_id,
       created_at,
-      product:products(
+      product:catalog_products(
         id,
         vendor_id,
         category_id,
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Verify product exists
     const { data: product, error: productError } = await supabase
-      .from('products')
+      .from('catalog_products')
       .select('id')
       .eq('id', product_id)
       .single()

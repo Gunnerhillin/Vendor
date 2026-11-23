@@ -50,7 +50,7 @@ export default function ProductDetailPage() {
 
       // Fetch product - need to find by slug. Products have unique(vendor_id, slug) so we search
       const { data: products } = await supabase
-        .from('products')
+        .from('catalog_products')
         .select(`
           *,
           vendor:vendor_directory(id, business_name, slug, logo_url),
@@ -81,7 +81,7 @@ export default function ProductDetailPage() {
 
         // Fetch related products
         const { data: relatedData } = await supabase
-          .from('products')
+          .from('catalog_products')
           .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
           .eq('category_id', p.category_id)
           .eq('status', 'approved')

@@ -29,7 +29,7 @@ export default function VendorStorefrontPage() {
         setVendor(v as Vendor)
 
         const { data: prods } = await supabase
-          .from('products')
+          .from('catalog_products')
           .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
           .eq('vendor_id', v.id)
           .eq('status', 'approved')

@@ -74,7 +74,7 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold">Response Time</p>
-                    <p className="text-sm text-gray-500">We typically respond within 24 hours</p>
+                    <p className="text-sm text-gray-500">Send a message to our support team</p>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -107,8 +107,8 @@ export default function ContactPage() {
                 <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-6">
                   <Check size={32} className="text-green-600" />
                 </div>
-                <h2 className="font-display text-xl font-semibold mb-3">Message Sent!</h2>
-                <p className="text-gray-500">Thanks for reaching out. We&apos;ll get back to you as soon as possible.</p>
+                <h2 className="font-display text-xl font-semibold mb-3">Message Received!</h2>
+                <p className="text-gray-500">Your message has been saved for our support team. We will reply using the email you provided.</p>
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="card p-6 md:p-8">

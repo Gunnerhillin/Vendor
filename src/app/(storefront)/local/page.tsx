@@ -31,7 +31,7 @@ export default function ShopLocalPage() {
       if (localVendors && localVendors.length > 0) {
         const vendorIds = localVendors.map(v => v.id)
         const { data: localProducts } = await supabase
-          .from('products')
+          .from('catalog_products')
           .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug, is_local)')
           .in('vendor_id', vendorIds)
           .eq('status', 'approved')

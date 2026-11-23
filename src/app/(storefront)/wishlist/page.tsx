@@ -27,7 +27,7 @@ export default function WishlistPage() {
         .from('wishlists')
         .select(`
           id,
-          product:products(
+          product:catalog_products(
             id, title, slug, price, compare_at_price, inventory_count, status,
             images:product_images(url, alt, sort_order),
             vendor:vendor_directory(business_name, slug)

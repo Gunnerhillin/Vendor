@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createServerSupabaseClient,createServiceRoleClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -29,85 +29,17 @@ export async function GET(request: NextRequest) {
   }
 }
 
-export async function POST(request: NextRequest) {
-  try {
-    const supabase = await createServerSupabaseClient()
-    const { data: { user } } = await supabase.auth.getUser()
-
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { product_id, rating, comment } = await request.json()
-
-    // Validation
-    if (!product_id) {
-      return NextResponse.json({ error: 'product_id is required' }, { status: 400 })
-    }
-
-    if (!rating || typeof rating !== 'number' || rating < 1 || rating > 5) {
-      return NextResponse.json({ error: 'Rating must be between 1 and 5' }, { status: 400 })
-    }
-
-    // Verify product exists
-    const { data: product, error: productError } = await supabase
-      .from('products')
-      .select('id')
-      .eq('id', product_id)
-      .single()
-
-    if (productError || !product) {
-      return NextResponse.json({ error: 'Product not found' }, { status: 404 })
-    }
-
-    // Check if user already reviewed this product
-    const { data: existingReview } = await supabase
-      .from('reviews')
-      .select('id')
-      .eq('product_id', product_id)
-      .eq('customer_id', user.id)
-      .single()
-
-    if (existingReview) {
-      return NextResponse.json({ error: 'You have already reviewed this product' }, { status: 409 })
-    }
-
-    // Insert review
-    const { data: review, error: insertError } = await supabase
-      .from('reviews')
-      .insert({
-        product_id,
-        customer_id: user.id,
-        rating,
-        comment: comment || null,
-      })
-      .select('id, product_id, customer_id, rating, comment, created_at')
-      .single()
-
-    if (insertError) {
-      console.error('Review insert error:', insertError)
-      return NextResponse.json({ error: insertError.message }, { status: 500 })
-    }
-
-    // Update product rating
-    const { data: reviews, error: reviewsError } = await supabase
-      .from('reviews')
-      .select('rating')
-      .eq('product_id', product_id)
-
-    if (!reviewsError && reviews && reviews.length > 0) {
-      const avg = reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length
-      const roundedAvg = Math.round(avg * 100) / 100
-
-      await supabase
-        .from('products')
-        .update({ rating_avg: roundedAvg, rating_count: reviews.length })
-        .eq('id', product_id)
-    }
-
-    return NextResponse.json({ review })
-  } catch (error: any) {
-    console.error('POST /api/reviews error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to create review' }, { status: 500 })
-  }
+export async function POST(request:NextRequest){return changeReview(request,false)}
+export async function DELETE(request:NextRequest){return changeReview(request,true)}
+async function changeReview(request:NextRequest,remove:boolean){
+ try {
+  const db=await createServerSupabaseClient();const {data:{user}}=await db.auth.getUser()
+  if(!user?.email_confirmed_at)return NextResponse.json({error:'Sign in with a verified email'},{status:401})
+  const body=await request.json()
+  if(!remove && (!Number.isInteger(body.rating)||typeof (body.comment||'')!=='string'))return NextResponse.json({error:'Enter a whole-number rating and text review'},{status:400})
+  const service=await createServiceRoleClient()
+  const {data,error}=await service.rpc('save_verified_review',{customer_arg:user.id,product_arg:body.product_id,rating_arg:remove?null:body.rating,comment_arg:body.comment||null,remove_arg:remove})
+  if(error)return NextResponse.json({error:error.code==='P0001'?error.message:'Unable to save this review'},{status:409})
+  return NextResponse.json({review:data})
+ }catch{return NextResponse.json({error:'Invalid review request'},{status:400})}
 }

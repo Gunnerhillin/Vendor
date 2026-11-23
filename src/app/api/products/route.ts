@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerSupabaseClient()
 
     let query = supabase
-      .from('products')
+      .from('catalog_products')
       .select(
         `
       id,
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Filter by vendor
     if (vendor) {
       const { data: vendorData } = await supabase
-        .from('vendors')
+        .from('vendor_directory')
         .select('id')
         .eq('slug', vendor)
         .single()

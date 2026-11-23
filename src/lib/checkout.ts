@@ -5,6 +5,7 @@ import type Stripe from 'stripe'
 export async function reconcileCheckout(session: Stripe.Checkout.Session, eventId: string) {
   const orderId = session.metadata?.order_id
   if (!orderId) return // Ignore unrelated Stripe sessions.
+  await linkSession(session)
   const db = await createServiceRoleClient()
   if (session.status === 'expired') {
     const { error } = await db.rpc('release_checkout', { order_arg: orderId, session_arg: session.id })
@@ -51,8 +52,33 @@ export async function startCheckout(order: any, items: any[]) {
       product_data: { name: `${item.product_title}${item.variant_description ? ` — ${item.variant_description}` : ''}`.slice(0,250) },
     } })),
   }, { idempotencyKey: `checkout:${order.id}` })
-  const db = await createServiceRoleClient()
-  const { error } = await db.from('orders').update({ checkout_session_id: session.id, checkout_url: session.url }).eq('id', order.id)
-  if (error || !session.url) throw new Error('Checkout could not be linked. Retry with the same cart.')
+  await linkSession(session)
+  if (!session.url) throw new Error('Checkout could not be opened. Check order status before retrying.')
   return session.url
+}
+
+async function linkSession(session: Stripe.Checkout.Session) {
+  const orderId=session.metadata?.order_id
+  if(!orderId || session.client_reference_id!==orderId) throw new Error('Checkout reference mismatch')
+  const db=await createServiceRoleClient()
+  const {error}=await db.rpc('link_checkout_session',{order_arg:orderId,session_arg:session.id,subtotal_arg:session.amount_subtotal,currency_arg:session.currency,live_arg:session.livemode,url_arg:session.url})
+  if(error) throw new Error('Unable to link verified checkout session')
+}
+
+export async function recoverReservedCheckout(order: any) {
+  if(order.checkout_session_id) {
+    const session=await stripe.checkout.sessions.retrieve(order.checkout_session_id)
+    await reconcileCheckout(session,`recovery:${session.id}`)
+    return
+  }
+  // Search a bounded creation window. Absence is never treated as proof of nonpayment.
+  const start=Math.floor(new Date(order.created_at).getTime()/1000)-60
+  let found:Stripe.Checkout.Session|undefined,scanned=0
+  await stripe.checkout.sessions.list({created:{gte:start,lte:start+3660},limit:100}).autoPagingEach(session=>{
+    scanned++
+    if(session.metadata?.order_id===order.id){found=session;return false}
+    if(scanned>=1000)return false
+  })
+  if(!found) throw new Error('No linked session found; keep reservation for manual reconciliation')
+  await reconcileCheckout(found,`recovery:${found.id}`)
 }

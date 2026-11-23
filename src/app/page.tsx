@@ -55,7 +55,7 @@ export default function HomePage() {
 
       // Trending (most sold)
       const { data: trendingData, error: trendingError } = await supabase
-        .from('products')
+        .from('catalog_products')
         .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
         .eq('status', 'approved')
         .order('sold_count', { ascending: false })
@@ -65,7 +65,7 @@ export default function HomePage() {
 
       // New arrivals
       const { data: newData } = await supabase
-        .from('products')
+        .from('catalog_products')
         .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
         .eq('status', 'approved')
         .order('created_at', { ascending: false })
