@@ -14,5 +14,7 @@ vm.runInNewContext(source,sandbox)
  const snapshot={from:'Original <test@example.invalid>',to:['original@example.invalid'],subject:'Original',html:'Original'}
  jobs=[{...jobs[0],attempts:2,email_snapshot:snapshot}];failure=true
  result=await sandbox.exports.dispatchNotifications();assert.equal(result.failed,1);assert.deepEqual(JSON.parse(sent.at(-1).body),snapshot);assert.equal(updates.at(-1).status,'failed');assert.ok(updates.at(-1).next_attempt_at)
- console.log('10 notification configuration, snapshot, idempotency and retry checks passed.')
+ failure=false;jobs=[{id:'refund-job',attempts:1,kind:'return_refunded',order_id:'order-id',payload:{}}];await sandbox.exports.dispatchNotifications();assert.ok(JSON.parse(sent.at(-1).body).html.includes('confirmed a refund'));assert.equal(JSON.parse(sent.at(-1).body).to[0],'customer@example.invalid')
+ jobs=[{id:'transfer-job',attempts:1,kind:'vendor_transfer',order_id:'order-id',payload:{}}];await sandbox.exports.dispatchNotifications();assert.equal(JSON.parse(sent.at(-1).body).to[0],'vendor@example.invalid');assert.ok(JSON.parse(sent.at(-1).body).html.includes('/vendor/earnings'));assert.ok(JSON.parse(sent.at(-1).body).html.includes('not confirmation of a bank payout'))
+ console.log('15 notification configuration, snapshot, idempotency and retry checks passed.')
 })().catch(e=>{console.error(e);process.exitCode=1})

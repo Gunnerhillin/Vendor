@@ -65,7 +65,7 @@ export default function AdminOrdersPage() {
               <tbody>
                 {orders.map((o) => (
                   <tr key={o.id} className="border-b border-warm-border last:border-0 hover:bg-warm-100/50">
-                    <td className="px-6 py-4 text-sm font-medium">#{o.id.slice(0, 8)}</td>
+                    <td className="px-6 py-4 text-sm font-medium">#{o.id.slice(0, 8)}<button className="block underline text-xs mt-1" onClick={async () => { try { await navigator.clipboard.writeText(o.id); setError("Order ID copied. Paste it into Launch setup: Review a payment problem.") } catch { setError(`Order ID: ${o.id}`) } }}>Copy full order ID</button></td>
                     <td className="px-6 py-4 text-sm text-gray-500">{formatDate(o.created_at)}</td>
                     <td className="px-6 py-4 text-sm">{o.customer?.full_name || o.customer?.email || "—"}</td>
                     <td className="px-6 py-4 text-sm">{o.items?.length || 0} items</td>

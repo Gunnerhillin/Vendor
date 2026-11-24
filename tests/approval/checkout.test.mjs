@@ -34,7 +34,7 @@ await db.exec(readFileSync(new URL('supabase/migrations/010_product_workflow.sql
 await db.exec('GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
 
 
-for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql','014_notification_delivery.sql','015_financial_operations.sql','016_launch_configuration.sql','017_scheduled_deals.sql','018_checkout_recovery.sql','019_contact_and_leads.sql','020_verified_reviews.sql','021_order_policy_snapshots.sql','022_background_recovery.sql','023_profile_visibility_and_commission.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
+for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql','014_notification_delivery.sql','015_financial_operations.sql','016_launch_configuration.sql','017_scheduled_deals.sql','018_checkout_recovery.sql','019_contact_and_leads.sql','020_verified_reviews.sql','021_order_policy_snapshots.sql','022_background_recovery.sql','023_profile_visibility_and_commission.sql','024_financial_notifications.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
 
 const buyer='00000000-0000-0000-0000-000000000001'
 const seller='00000000-0000-0000-0000-000000000002'
@@ -265,5 +265,10 @@ assert.ok(again.every(o=>!batch.some(b=>b.id===o.id)));checks++
 for(const o of batch) await equal(`SELECT reservation_state FROM orders WHERE id=$1`,'reserved',[o.id])
 await db.exec(`RESET ROLE; UPDATE orders SET recovery_checked_at=now()-interval '31 minutes' WHERE reservation_state='reserved'; SET ROLE service_role`)
 assert.ok((await db.query('SELECT * FROM claim_checkout_recovery(3)')).rows.length>0);checks++
+await db.exec(`RESET ROLE; SET ROLE service_role`)
+await equal(`SELECT count(*)::int FROM notification_outbox WHERE dedupe_key='financial-confirmed:'||$1::text`,1,[refund3.id])
+await db.query(`SELECT finish_financial_operation($1,'re_after_transfer')`,[refund3.id])
+await equal(`SELECT count(*)::int FROM notification_outbox WHERE dedupe_key='financial-confirmed:'||$1::text`,1,[refund3.id])
+await equal(`SELECT kind FROM notification_outbox WHERE dedupe_key='financial-confirmed:'||$1::text`,'return_refunded',[refund3.id])
 console.log(`${checks} checkout and fulfillment checks passed`)
 await db.close()

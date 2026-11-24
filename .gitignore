@@ -4,3 +4,8 @@ node_modules
 .env*.local
 *.tsbuildinfo
 next-env.d.ts
+
+# Keep all environment credentials out of source control.
+.env
+.env.*
+!.env.example

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import OperationsInbox from '@/components/admin/OperationsInbox'
 import ServiceReadiness from '@/components/admin/ServiceReadiness'
+import FinancialReview from '@/components/admin/FinancialReview'
 import LaunchConfiguration from '@/components/admin/LaunchConfiguration'
 import { createClient } from '@/lib/supabase/client'
 
@@ -62,6 +63,7 @@ export default function LaunchSetup() {
     <LaunchConfiguration />
     <ServiceReadiness />
     <OperationsInbox />
+    <FinancialReview />
     <p role="status" className="text-sm">{notice}</p>
   </div>
 }

@@ -17,7 +17,7 @@ export async function dispatchNotifications() {
         const {data: order,error: orderError} = await db.from('orders').select('id,customer_id,checkout_email,payment_processed_at').eq('id',job.order_id).single()
         if(orderError || !order?.payment_processed_at) throw new Error('Paid order unavailable')
         let recipient = order.checkout_email
-        const vendorMessage = ['vendor_order','vendor_return'].includes(job.kind)
+        const vendorMessage = ['vendor_order','vendor_return','vendor_transfer'].includes(job.kind)
         if(vendorMessage) {
           const {data: vendor} = await db.from('vendors').select('user_id').eq('id',job.vendor_id).single()
           if(!vendor) throw new Error('Vendor unavailable')
@@ -34,10 +34,12 @@ export async function dispatchNotifications() {
           fulfillment:job.payload?.status === 'delivered' ? 'An item in your order has been marked delivered. Open your order for details.' : 'An item in your order has shipped. Open your order for carrier and tracking details.',
           vendor_return:'A customer has requested a return. Please open your returns to review it.',
           return_decision:'There is an update to your return request. Open your order to review the decision and instructions.',
+          return_refunded:'Stripe has confirmed a refund for an item in your order. Open your order to review it. The time until the credit appears depends on your payment provider.',
+          vendor_transfer:'Stripe has confirmed a transfer to your brand account. Open your earnings to review it. This is not confirmation of a bank payout.',
         }
         const message=messages[job.kind]
         if(!message) throw new Error('Unsupported notification')
-        const path=vendorMessage ? job.kind==='vendor_return'?'/vendor/returns':'/vendor/orders' : '/account/orders'
+        const path=vendorMessage ? job.kind==='vendor_return'?'/vendor/returns':job.kind==='vendor_transfer'?'/vendor/earnings':'/vendor/orders' : '/account/orders'
         email={from,to:[recipient],subject:`CutieValley order ${order.id.slice(0,8)} — update`,html:`<h1>CutieValley</h1><p>${escape(message)}</p><p><a href="${escape(origin+path)}">Open your ${vendorMessage?'vendor account':'order'}</a></p><p>Sign in to view private order details.</p>`}
         const {data: saved,error: saveError}=await db.from('notification_outbox').update({email_snapshot:email}).eq('id',job.id).eq('attempts',job.attempts).eq('status','sending').select('id').maybeSingle()
         if(saveError || !saved) throw new Error('Notification claim changed')
