@@ -1,6 +1,6 @@
 # CutieValley launch build — resume here
 
-Updated: November 23, 2026 (America/Denver).
+Updated: November 24, 2026 (America/Denver).
 
 ## Latest checkpoint — November 23, 2026
 Development contains migrations 011–024. None have been deployed. Production main remains 32782f2 (partner guide). Development checkpoints ae7249b and 9506533 are pushed. Production main remains unchanged. Live switches were NOT enabled.
@@ -128,3 +128,11 @@ Read this file, git status/log, and latest tests. Continue unfinished items; do 
 - Source partner guide extended to 32 steps with development-only customer messages, flash deals, service checks and financial review; unique checkmarks/section links validated. Public production guide remains its previously deployed 28-step version until the next coordinated release.
 - UTF-8 encoding normalized for progress notes, operational documentation and contact migration. A narrow source scan found no private Stripe/signing-key or private-key-block patterns; this is not a comprehensive security certification.
 - No main deployment in this continuation. Do not merge 011–024 code into production without schema compatibility and real-provider testing. Development work is pushed and local output archive/progress notes refreshed.
+
+## November 24 — payment access checks and deployment blocker
+- Dashboard retry still fails before account access with "failed to write kernel assets". No production database changes or main deployment were made. Draft release review: https://github.com/Gunnerhillin/Vendor/pull/1 .
+- Checkout status/cancellation now validates order IDs and rejects malformed request bodies. Before reconciling or expiring a provider session, both its order metadata and client reference must match the authenticated customer's saved order. A mismatched session is never expired or reconciled.
+- Vendor payment onboarding now requires a verified email, reads only necessary vendor fields, and returns/logs generic errors rather than raw provider or database details.
+- Added 32 permission, ownership, cancellation, malformed input and error-redaction checks in tests/payment-access.cjs, included in npm test. Type checking passes. Existing 324 checks plus this suite total 356.
+- Remaining onboarding limitation: an interrupted account creation older than Stripe's idempotency retention still needs durable attempt/reconciliation handling before launch. Do not treat these access checks as complete onboarding integration verification.
+- Existing output SQL bundles cover 011–024; rollback/application bundle was verified in isolated PGlite, followed by 112 checkout/fulfillment database checks. Production compatibility and PostgREST joins still require accessible dashboard/staging verification.

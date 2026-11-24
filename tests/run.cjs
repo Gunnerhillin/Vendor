@@ -4,7 +4,7 @@ const suites = [
   'approval/approval.test.mjs', 'approval/payment.test.mjs', 'approval/product.test.mjs',
   'approval/checkout.test.mjs', 'checkout-recovery.cjs', 'financial-operations.cjs',
   'financial-review.cjs', 'notifications.cjs', 'operations.cjs', 'product-api.cjs',
-  'webhook-signature.cjs', 'webhook-processing.cjs',
+  'webhook-signature.cjs', 'webhook-processing.cjs', 'payment-access.cjs',
 ]
 for (const suite of suites) {
   const result = spawnSync(process.execPath, [resolve(__dirname, suite)], {
