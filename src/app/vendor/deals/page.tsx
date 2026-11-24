@@ -127,7 +127,7 @@ export default function VendorDealsPage() {
           <h1 className="font-display text-2xl font-semibold flex items-center gap-2">
             <Zap size={24} className="text-amber-500" /> Flash Deals
           </h1>
-          <p className="text-sm text-gray-400 mt-1">Create limited-time discounts to push sales. Deals run 3-6 days and require admin approval.</p>
+          <p className="text-sm text-gray-400 mt-1">Deals run 3–6 days and require approval before they start. Use approved products without variants. Changing the product cancels the deal.</p>
         </div>
         <button
           onClick={() => setShowCreate(true)}
@@ -148,7 +148,7 @@ export default function VendorDealsPage() {
         <div className="space-y-3">
           {deals.map((deal) => {
             const now = new Date()
-            const isLive = deal.status === 'approved' && new Date(deal.starts_at) <= now && new Date(deal.ends_at) >= now
+            const isLive = deal.status === 'approved' && new Date(deal.starts_at) <= now && new Date(deal.ends_at) > now
             const daysLeft = isLive ? Math.ceil((new Date(deal.ends_at).getTime() - now.getTime()) / (1000 * 60 * 60 * 24)) : 0
 
             return (
@@ -164,7 +164,7 @@ export default function VendorDealsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm font-semibold">{deal.product?.title || "Product"}</p>
                       <span className={`badge capitalize text-[10px] ${statusColors[deal.status] || ""}`}>
-                        {deal.status}
+                        {deal.status === 'approved' && new Date(deal.ends_at) <= now ? 'expired' : deal.status === 'approved' && new Date(deal.starts_at) > now ? 'scheduled' : deal.status}
                       </span>
                       {isLive && (
                         <span className="badge text-[10px] bg-green-500 text-white animate-pulse">

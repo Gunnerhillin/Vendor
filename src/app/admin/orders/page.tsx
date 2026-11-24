@@ -22,15 +22,14 @@ export default function AdminOrdersPage() {
     fetchOrders()
   }, [])
 
-  const handleStatusChange = async (orderId: string, newStatus: string) => {
-    const { error } = await supabase
-      .from("orders")
-      .update({ status: newStatus })
-      .eq("id", orderId)
-
-    if (!error) {
-      setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
-    }
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState<string | null>(null)
+  async function confirmDelivery(itemId: string) {
+    setSaving(itemId); setError('')
+    const { data, error } = await supabase.rpc('update_fulfillment', { item_id: itemId, next_status: 'delivered' })
+    if (error) setError(error.message)
+    else setOrders(previous => previous.map(order => ({ ...order, items: order.items.map((item: any) => item.id === itemId ? { ...item, ...data } : item) })))
+    setSaving(null)
   }
 
   if (loading) {
@@ -44,7 +43,7 @@ export default function AdminOrdersPage() {
   return (
     <div className="max-w-6xl">
       <h1 className="font-display text-2xl font-semibold mb-6">All Orders</h1>
-      <div className="card">
+      <p className="text-sm mb-4">Verify carrier delivery before confirming an item. Confirmation makes it eligible for payout review; it does not send money.</p>{error && <p role="alert" className="text-red-700 mb-4">{error}</p>}<div className="card">
         {orders.length === 0 ? (
           <div className="p-12 text-center text-gray-400">
             <p>No orders yet</p>
@@ -66,7 +65,7 @@ export default function AdminOrdersPage() {
               <tbody>
                 {orders.map((o) => (
                   <tr key={o.id} className="border-b border-warm-border last:border-0 hover:bg-warm-100/50">
-                    <td className="px-6 py-4 text-sm font-medium">#{o.id.slice(0, 8)}</td>
+                    <td className="px-6 py-4 text-sm font-medium">#{o.id.slice(0, 8)}<button className="block underline text-xs mt-1" onClick={async () => { try { await navigator.clipboard.writeText(o.id); setError("Order ID copied. Paste it into Launch setup: Review a payment problem.") } catch { setError(`Order ID: ${o.id}`) } }}>Copy full order ID</button></td>
                     <td className="px-6 py-4 text-sm text-gray-500">{formatDate(o.created_at)}</td>
                     <td className="px-6 py-4 text-sm">{o.customer?.full_name || o.customer?.email || "—"}</td>
                     <td className="px-6 py-4 text-sm">{o.items?.length || 0} items</td>
@@ -82,18 +81,13 @@ export default function AdminOrdersPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <select
-                        value={o.status}
-                        onChange={(e) => handleStatusChange(o.id, e.target.value)}
-                        className="text-xs border border-warm-border rounded-lg px-2 py-1 bg-white"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="processing">Processing</option>
-                        <option value="shipped">Shipped</option>
-                        <option value="delivered">Delivered</option>
-                        <option value="cancelled">Cancelled</option>
-                        <option value="refunded">Refunded</option>
-                      </select>
+                      {o.items?.map((item: any) => <div key={item.id} className="mb-3 text-xs">
+                        <p>{item.product_title || item.product?.title} · {item.vendor?.business_name}</p>
+                        <p>{item.status} {item.shipping_carrier} {item.tracking_number}</p>
+                        {item.delivery_confirmed_at ? <span className="text-green-700">Delivery verified</span> :
+                          ['shipped','delivered'].includes(item.status) && <button disabled={saving !== null} onClick={() => confirmDelivery(item.id)} className="underline text-accent-dark">{saving === item.id ? 'Saving…' : 'Confirm verified delivery'}</button>}
+                      </div>)}
+
                     </td>
                   </tr>
                 ))}

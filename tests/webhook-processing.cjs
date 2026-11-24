@@ -8,8 +8,9 @@ const secret = 'whsec_test_local_only'
 const source = ts.transpileModule(readFileSync('src/app/api/webhooks/stripe/route.ts','utf8'), {
  compilerOptions:{module:ts.ModuleKind.CommonJS,target:ts.ScriptTarget.ES2020}
 }).outputText
-let fail = false, calls = [], accountValue
+let fail = false, calls = [], accountValue, reconciled = []
 const stripe = { webhooks:verifier.webhooks,
+ checkout:{sessions:{retrieve:async id=>({id,status:"complete"})}},
  charges:{retrieve:async()=>({id:'ch_one',payment_intent:'pi_one',amount:2000,currency:'usd'})},
  refunds:{list:()=>({autoPagingEach:async fn=>{fn({status:'succeeded',amount:500});fn({status:'pending',amount:200});fn({status:'failed',amount:100})}})},
  accounts:{retrieve:async()=>({id:'acct_one',details_submitted:true,charges_enabled:true,payouts_enabled:false})}
@@ -20,6 +21,8 @@ const sandbox={exports:{},process:{env:{STRIPE_WEBHOOK_SECRET:secret}},console:{
  if(name==='next/server')return {NextResponse:{json:(body,opts)=>({body,status:opts?.status||200})}}
  if(name==='@/lib/stripe')return {stripe}
  if(name==='@/lib/supabase/server')return {createServiceRoleClient:async()=>db}
+ if(name==='@/lib/checkout')return {reconcileCheckout:async (session,event)=>{if(fail)throw new Error('Recovery failure');reconciled.push({session,event})}}
+ if(name==='@/lib/financial-operations')return {reconcileManagedRefund:async()=>false}
  throw new Error(name)
 }}
 vm.runInNewContext(source,sandbox)
@@ -37,5 +40,14 @@ async function send(type,object){const payload=JSON.stringify({id:'evt_one',type
  assert.equal(accountValue.stripe_onboarding_complete,false)
  fail=true
  assert.equal((await send('account.updated',{id:'acct_one'})).status,500)
- console.log('9 webhook routing, error propagation and refund-status checks passed.')
+ fail=false
+ assert.equal((await send('checkout.session.completed',{id:'cs_one'})).status,200)
+ assert.equal(reconciled.at(-1).session.id,'cs_one')
+ assert.equal((await send('checkout.session.expired',{id:'cs_two'})).status,200)
+ fail=true
+ assert.equal((await send('checkout.session.completed',{id:'cs_one'})).status,500)
+ const before=calls.length
+ assert.equal((await send('payment_intent.succeeded',{id:'pi_checkout',metadata:{checkout_order_id:'order'}})).status,200)
+ assert.equal(calls.length,before)
+ console.log('15 webhook routing, error propagation and refund-status checks passed.')
 })().catch(e=>{console.error(e);process.exitCode=1})

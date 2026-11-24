@@ -48,7 +48,7 @@ export default function DealTimer({ endsAt, label = 'Flash Sale' }: DealTimerPro
           </div>
         ))}
       </div>
-      <span className="text-sm text-gray-500 hidden sm:block">Up to 75% off — limited quantities</span>
+      <span className="text-sm text-gray-500 hidden sm:block">Approved offers end at the time shown</span>
     </div>
   )
 }

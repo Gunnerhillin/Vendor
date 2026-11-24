@@ -19,7 +19,7 @@ export default function ShopLocalPage() {
 
       // Fetch local vendors
       const { data: localVendors } = await supabase
-        .from('vendors')
+        .from('vendor_directory')
         .select('*')
         .eq('is_local', true)
         .eq('status', 'approved')
@@ -31,8 +31,8 @@ export default function ShopLocalPage() {
       if (localVendors && localVendors.length > 0) {
         const vendorIds = localVendors.map(v => v.id)
         const { data: localProducts } = await supabase
-          .from('products')
-          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug, is_local)')
+          .from('catalog_products')
+          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug, is_local)')
           .in('vendor_id', vendorIds)
           .eq('status', 'approved')
           .order('created_at', { ascending: false })
@@ -104,8 +104,8 @@ export default function ShopLocalPage() {
             },
             {
               icon: MapPin,
-              title: 'Free Local Pickup',
-              desc: 'Many of our local vendors offer free pickup right here in St. George. Skip shipping, grab it today.',
+              title: 'Shipping Included',
+              desc: 'Each brand includes shipping in its product prices. Items from different brands may arrive separately.',
             },
             {
               icon: Users,

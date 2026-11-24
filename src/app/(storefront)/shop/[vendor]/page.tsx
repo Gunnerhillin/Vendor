@@ -19,7 +19,7 @@ export default function VendorStorefrontPage() {
       const supabase = createClient()
 
       const { data: v } = await supabase
-        .from('vendors')
+        .from('vendor_directory')
         .select('*')
         .eq('slug', vendorSlug)
         .eq('status', 'approved')
@@ -29,8 +29,8 @@ export default function VendorStorefrontPage() {
         setVendor(v as Vendor)
 
         const { data: prods } = await supabase
-          .from('products')
-          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+          .from('catalog_products')
+          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
           .eq('vendor_id', v.id)
           .eq('status', 'approved')
           .order('created_at', { ascending: false })
@@ -86,7 +86,7 @@ export default function VendorStorefrontPage() {
             )}
           </div>
           {/* Local badges */}
-          {(vendor.is_local || vendor.offers_local_pickup) && (
+          {vendor.is_local && (
             <div className="flex items-center justify-center gap-2 mt-4">
               {vendor.is_local && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 text-xs font-semibold border border-emerald-200">
@@ -94,21 +94,9 @@ export default function VendorStorefrontPage() {
                   Shop Local Vendor
                 </span>
               )}
-              {vendor.offers_local_pickup && (
-                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
-                  <MapPin size={14} className="text-blue-600" />
-                  Local Pickup Available
-                </span>
-              )}
             </div>
           )}
-          {/* Pickup info */}
-          {vendor.offers_local_pickup && vendor.pickup_instructions && (
-            <div className="mt-4 bg-white/80 backdrop-blur-sm rounded-xl px-4 py-3 max-w-md mx-auto text-left">
-              <p className="text-xs font-semibold text-gray-700 mb-1">Pickup Info</p>
-              <p className="text-xs text-gray-500">{vendor.pickup_instructions}</p>
-            </div>
-          )}
+          <p className="mt-4 text-sm text-gray-600">Shipping is included in product prices. This brand ships its items directly to you. Local pickup is not available at checkout.</p>
         </div>
       </div>
 

@@ -50,10 +50,10 @@ export default function ProductDetailPage() {
 
       // Fetch product - need to find by slug. Products have unique(vendor_id, slug) so we search
       const { data: products } = await supabase
-        .from('products')
+        .from('catalog_products')
         .select(`
           *,
-          vendor:vendors(id, business_name, slug, logo_url),
+          vendor:vendor_directory(id, business_name, slug, logo_url),
           category:categories(id, name, slug, icon),
           images:product_images(id, url, alt, sort_order),
           variants:product_variants(id, name, type, value, price_adjustment, inventory_count, sort_order)
@@ -73,7 +73,7 @@ export default function ProductDetailPage() {
         // Fetch reviews
         const { data: reviewsData } = await supabase
           .from('reviews')
-          .select('*, customer:profiles(full_name, avatar_url)')
+          .select('*, customer:public_profiles(full_name, avatar_url)')
           .eq('product_id', p.id)
           .order('created_at', { ascending: false })
 
@@ -81,8 +81,8 @@ export default function ProductDetailPage() {
 
         // Fetch related products
         const { data: relatedData } = await supabase
-          .from('products')
-          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+          .from('catalog_products')
+          .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
           .eq('category_id', p.category_id)
           .eq('status', 'approved')
           .neq('id', p.id)
@@ -146,7 +146,7 @@ export default function ProductDetailPage() {
       // Refresh reviews
       const { data: reviewsData } = await supabase
         .from('reviews')
-        .select('*, customer:profiles(full_name, avatar_url)')
+        .select('*, customer:public_profiles(full_name, avatar_url)')
         .eq('product_id', product.id)
         .order('created_at', { ascending: false })
       if (reviewsData) setReviews(reviewsData)

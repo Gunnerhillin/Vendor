@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       id,
       product_id,
       created_at,
-      product:products(
+      product:catalog_products(
         id,
         vendor_id,
         category_id,
@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
         created_at,
         updated_at,
         images:product_images(id, url, alt, sort_order),
-        vendor:vendors(id, business_name, slug, logo_url)
+        vendor:vendor_directory(id, business_name, slug, logo_url)
       )
     `
       )
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Verify product exists
     const { data: product, error: productError } = await supabase
-      .from('products')
+      .from('catalog_products')
       .select('id')
       .eq('id', product_id)
       .single()

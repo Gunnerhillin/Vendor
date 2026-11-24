@@ -56,7 +56,7 @@ export default function AccountOrdersPage() {
 
       const { data } = await supabase
         .from("orders")
-        .select("*, items:order_items(*, product:products(title, slug, images:product_images(url)), vendor:vendors(business_name))")
+        .select("*, items:order_items(*, product:products(title, slug, images:product_images(url)), vendor:vendor_directory(business_name))")
         .eq("customer_id", user.id)
         .order("created_at", { ascending: false })
 
@@ -129,7 +129,7 @@ export default function AccountOrdersPage() {
               <div className="flex items-center justify-between p-6 bg-warm-100/50 border-b border-warm-border">
                 <div className="flex items-center gap-6">
                   <div>
-                    <p className="text-xs text-gray-400 uppercase tracking-wider">Order Placed</p>
+                    <p className="text-xs text-gray-400 uppercase tracking-wider">{order.payment_processed_at ? 'Order placed' : 'Checkout started'}</p>
                     <p className="text-sm font-medium">{formatDate(order.created_at)}</p>
                   </div>
                   <div>
@@ -145,6 +145,7 @@ export default function AccountOrdersPage() {
                 </div>
               </div>
 
+              {order.policy_snapshot?.policies_confirmed && <details className="px-6 py-3 border-b text-sm"><summary className="cursor-pointer font-medium">Return terms saved with this order</summary><p className="mt-2">Request a return within {order.policy_snapshot.return_window_days} days after delivery.</p><p className="whitespace-pre-wrap">{order.policy_snapshot.return_condition}</p></details>}
               {/* Order Items */}
               <div className="p-6 space-y-4">
                 {order.items?.map((item: any) => (
@@ -156,7 +157,7 @@ export default function AccountOrdersPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <Link href={`/products/${item.product?.slug || ''}`} className="text-sm font-medium hover:text-accent block">
-                        {item.product?.title || "Product"}
+                        {item.product_title || item.product?.title || "Product"}
                       </Link>
                       <p className="text-xs text-gray-400">by {item.vendor?.business_name || "—"} &middot; Qty: {item.quantity}</p>
 
@@ -169,7 +170,7 @@ export default function AccountOrdersPage() {
                               {item.shipping_carrier?.toUpperCase() || 'Tracking'}:
                               {carrierTrackingUrls[item.shipping_carrier] ? (
                                 <a
-                                  href={`${carrierTrackingUrls[item.shipping_carrier]}${item.tracking_number}`}
+                                  href={`${carrierTrackingUrls[item.shipping_carrier]}${encodeURIComponent(item.tracking_number)}`}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="ml-1 font-mono underline"

@@ -32,101 +32,30 @@ export default function VendorOrdersPage() {
   const [carrier, setCarrier] = useState('usps')
   const [submitting, setSubmitting] = useState(false)
 
-  useEffect(() => {
-    async function fetchOrders() {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
-
-      const { data: vendor } = await supabase
-        .from("vendors")
-        .select("id")
-        .eq("user_id", user.id)
-        .single()
-
-      if (!vendor) return
-
-      const { data: items } = await supabase
-        .from("order_items")
-        .select("*, order:orders(id, created_at, status, shipping_name, shipping_city, shipping_state, shipping_line1, shipping_postal_code), product:products(title, slug, images:product_images(url))")
-        .eq("vendor_id", vendor.id)
-        .order("created_at", { ascending: false })
-
-      if (items) setOrders(items)
-      setLoading(false)
-    }
-    fetchOrders()
-  }, [])
-
-  const handleMarkShipped = async (orderItemId: string, orderId: string) => {
-    setSubmitting(true)
-
-    // Update order item status
-    const { error } = await supabase
-      .from("order_items")
-      .update({
-        status: "shipped",
-        tracking_number: trackingNumber || null,
-        shipping_carrier: carrier || null,
+  const [error, setError] = useState('')
+  async function fetchOrders() {
+    const { data, error } = await supabase.rpc('vendor_fulfillment_orders')
+    if (error) setError('Unable to load orders. Please refresh and try again.')
+    else setOrders(data || [])
+    setLoading(false)
+  }
+  useEffect(() => { fetchOrders() }, [])
+  async function updateShipment(itemId: string, status: string) {
+    setSubmitting(true); setError('')
+    try {
+      const { error } = await supabase.rpc('update_fulfillment', {
+        item_id: itemId, next_status: status,
+        tracking: status === 'shipped' ? trackingNumber.trim() : null,
+        carrier: status === 'shipped' ? carrier : null,
       })
-      .eq("id", orderItemId)
-
-    if (!error) {
-      // Update local state
-      setOrders(prev => prev.map(o => o.id === orderItemId
-        ? { ...o, status: "shipped", tracking_number: trackingNumber, shipping_carrier: carrier }
-        : o
-      ))
-
-      // Check if ALL items in this order are now shipped
-      const { data: allItems } = await supabase
-        .from("order_items")
-        .select("status")
-        .eq("order_id", orderId)
-
-      if (allItems && allItems.every(i => i.status === 'shipped' || i.status === 'delivered')) {
-        await supabase.from("orders").update({ status: "shipped" }).eq("id", orderId)
-      }
-
-      // Send shipping notification email
-      fetch('/api/email/shipping-update', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          orderId,
-          orderItemId,
-          status: 'shipped',
-          trackingNumber: trackingNumber || undefined,
-          carrier: carrier || undefined,
-        }),
-      }).catch(err => console.error('Email notification failed:', err))
-
-      setShippingModal(null)
-      setTrackingNumber('')
-      setCarrier('usps')
-    }
-
-    setSubmitting(false)
+      if (error) throw error
+      await fetchOrders()
+      setShippingModal(null); setTrackingNumber(''); setCarrier('usps')
+    } catch (e: any) { setError(e.message || 'Unable to update shipment. Please retry.') }
+    finally { setSubmitting(false) }
   }
-
-  const handleMarkDelivered = async (orderItemId: string, orderId: string) => {
-    const { error } = await supabase
-      .from("order_items")
-      .update({ status: "delivered" })
-      .eq("id", orderItemId)
-
-    if (!error) {
-      setOrders(prev => prev.map(o => o.id === orderItemId ? { ...o, status: "delivered" } : o))
-
-      const { data: allItems } = await supabase
-        .from("order_items")
-        .select("status")
-        .eq("order_id", orderId)
-
-      if (allItems && allItems.every(i => i.status === 'delivered')) {
-        await supabase.from("orders").update({ status: "delivered" }).eq("id", orderId)
-      }
-    }
-  }
+  const handleMarkShipped = (itemId: string, _orderId: string) => updateShipment(itemId, 'shipped')
+  const handleMarkDelivered = (itemId: string, _orderId: string) => updateShipment(itemId, 'delivered')
 
   const filteredOrders = filter === 'all' ? orders : orders.filter(o => o.status === filter)
   const counts = {
@@ -148,6 +77,8 @@ export default function VendorOrdersPage() {
     <div className="max-w-6xl">
       <h1 className="font-display text-2xl font-semibold mb-6">Orders</h1>
 
+      <p className="text-sm text-gray-600 mb-4">Include shipping in your prices. Buy your label with your preferred carrier, then enter tracking here. Admin reviews delivery before approving payment to your brand.</p>
+      {error && <p role="alert" className="text-red-700 mb-4">{error}</p>}
       {/* Filter tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
         {(['all', 'processing', 'shipped', 'delivered'] as const).map((tab) => (
@@ -199,7 +130,7 @@ export default function VendorOrdersPage() {
                           ) : <div className="w-full h-full flex items-center justify-center text-xs">🛍️</div>}
                         </div>
                         <div>
-                          <p className="text-sm font-medium">{o.product?.title || "—"}</p>
+                          <p className="text-sm font-medium">{o.product_title || o.product?.title || "—"}</p>
                           <p className="text-xs text-gray-400">Qty: {o.quantity}</p>
                         </div>
                       </div>
@@ -207,7 +138,7 @@ export default function VendorOrdersPage() {
                     <td className="px-6 py-4">
                       <p className="text-sm">{o.order?.shipping_name || "—"}</p>
                       <p className="text-xs text-gray-400">
-                        {[o.order?.shipping_city, o.order?.shipping_state].filter(Boolean).join(', ')}
+                        {o.order?.shipping_line1}<br />{o.order?.shipping_line2 && <>{o.order.shipping_line2}<br /></>}{[o.order?.shipping_city, o.order?.shipping_state, o.order?.shipping_postal_code, o.order?.shipping_country].filter(Boolean).join(', ')}
                       </p>
                     </td>
                     <td className="px-6 py-4 text-sm font-medium">{formatPrice(o.unit_price * o.quantity)}</td>
@@ -274,10 +205,10 @@ export default function VendorOrdersPage() {
                   type="text"
                   value={trackingNumber}
                   onChange={(e) => setTrackingNumber(e.target.value)}
-                  placeholder="Enter tracking number (optional)"
+                  placeholder="Enter tracking number"
                   className="input font-mono"
                 />
-                <p className="text-xs text-gray-400 mt-1">Customers will receive an email with tracking info.</p>
+                <p className="text-xs text-gray-400 mt-1">Tracking will appear in the customer’s order history.</p>
               </div>
 
               <div className="flex gap-3 pt-2">
@@ -292,7 +223,7 @@ export default function VendorOrdersPage() {
                     const order = orders.find(o => o.id === shippingModal)
                     if (order) handleMarkShipped(shippingModal, order.order?.id)
                   }}
-                  disabled={submitting}
+                  disabled={submitting || trackingNumber.trim().length < 4}
                   className="btn-primary flex-1 text-sm"
                 >
                   {submitting ? 'Updating...' : 'Confirm Shipment'}

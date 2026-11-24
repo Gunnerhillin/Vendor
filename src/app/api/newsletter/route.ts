@@ -1,51 +1,16 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createServiceRoleClient } from '@/lib/supabase/server'
-import { sendEmail, newsletterWelcomeEmail } from '@/lib/email'
-
-export async function POST(request: NextRequest) {
-  try {
-    const { email } = await request.json()
-
-    if (!email || !email.includes('@')) {
-      return NextResponse.json({ error: 'Valid email required' }, { status: 400 })
-    }
-
-    const supabase = await createServiceRoleClient()
-
-    // Check if already subscribed
-    const { data: existing } = await supabase
-      .from('newsletter_subscribers')
-      .select('id')
-      .eq('email', email.toLowerCase().trim())
-      .single()
-
-    if (existing) {
-      return NextResponse.json({ message: 'Already subscribed!' })
-    }
-
-    // Insert subscriber
-    const { error } = await supabase
-      .from('newsletter_subscribers')
-      .insert({
-        email: email.toLowerCase().trim(),
-        subscribed_at: new Date().toISOString(),
-      })
-
-    if (error) {
-      // If table doesn't exist yet, still send welcome email
-      console.error('Newsletter insert error:', error)
-    }
-
-    // Send welcome email
-    await sendEmail({
-      to: email,
-      subject: 'Welcome to CutieValley!',
-      html: newsletterWelcomeEmail(email),
-    })
-
-    return NextResponse.json({ success: true, message: 'Subscribed!' })
-  } catch (error: any) {
-    console.error('Newsletter error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
-  }
+import {NextRequest,NextResponse} from 'next/server'
+import {createServiceRoleClient} from '@/lib/supabase/server'
+export async function POST(request:NextRequest){
+ try {
+  if(Number(request.headers.get('content-length')||0)>20000)return NextResponse.json({error:'Message is too large'},{status:413})
+  const raw=await request.text()
+  if(raw.length>20000)return NextResponse.json({error:'Message is too large'},{status:413})
+  const body=JSON.parse(raw)
+  if(body.website)return NextResponse.json({success:true,message:'Received'})
+  if(typeof body.email!=='string')return NextResponse.json({error:'Enter a valid email address'},{status:400})
+  const db=await createServiceRoleClient()
+  const {error}=await db.rpc('capture_public_message',{kind_arg:'newsletter',email_arg:body.email,name_arg:body.name||null,subject_arg:body.subject||null,message_arg:body.message||null})
+  if(error)return NextResponse.json({error:error.code==='P0001'?error.message:'Unable to save your request. Please retry.'},{status:400})
+  return NextResponse.json({success:true,message:'Thanks for your interest in CutieValley updates.'})
+ }catch{return NextResponse.json({error:'Unable to save your request. Please check the form and retry.'},{status:400})}
 }

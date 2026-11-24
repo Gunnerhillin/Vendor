@@ -45,7 +45,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
 
   // Vendor shop pages
   const { data: vendors } = await supabase
-    .from('vendors')
+    .from('vendor_directory')
     .select('slug, updated_at')
     .eq('status', 'approved')
 

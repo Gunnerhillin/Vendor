@@ -7,13 +7,13 @@ export async function POST(request: NextRequest) {
     const supabase = await createServerSupabaseClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    if (!user?.email || !user.email_confirmed_at) {
+      return NextResponse.json({ error: 'Sign in with a verified email before connecting a payment account.' }, { status: 401 })
     }
 
     const { data: vendor, error: vendorError } = await supabase
       .from('vendors')
-      .select('*')
+      .select('id,business_name,status,stripe_account_id')
       .eq('user_id', user.id)
       .single()
 
@@ -40,11 +40,11 @@ export async function POST(request: NextRequest) {
           .eq('id', vendor.id)
 
         if (updateError) {
-          console.error('Failed to update vendor with stripe account:', updateError)
+          console.error('Failed to save vendor payment account')
           return NextResponse.json({ error: 'Failed to save Stripe account' }, { status: 500 })
         }
       } catch (error: any) {
-        console.error('Failed to create Stripe Connect account:', error)
+        console.error('Vendor payment account creation failed')
         return NextResponse.json({ error: 'Failed to create Stripe account' }, { status: 500 })
       }
     }
@@ -54,11 +54,11 @@ export async function POST(request: NextRequest) {
       const accountLink = await createAccountLink(stripeAccountId)
       return NextResponse.json({ url: accountLink.url })
     } catch (error: any) {
-      console.error('Failed to create account link:', error)
+      console.error('Vendor payment setup link creation failed')
       return NextResponse.json({ error: 'Failed to create onboarding link' }, { status: 500 })
     }
   } catch (error: any) {
-    console.error('Stripe Connect error:', error)
-    return NextResponse.json({ error: error.message || 'Stripe Connect failed' }, { status: 500 })
+    console.error('Vendor payment setup failed')
+    return NextResponse.json({ error: 'Unable to open payment setup. Please retry or contact support.' }, { status: 500 })
   }
 }

@@ -36,8 +36,8 @@ export default function RecentlyViewed({ excludeId }: { excludeId?: string }) {
 
       const supabase = createClient()
       const { data } = await supabase
-        .from('products')
-        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendors(id, business_name, slug)')
+        .from('catalog_products')
+        .select('*, images:product_images(id, url, alt, sort_order), vendor:vendor_directory(id, business_name, slug)')
         .in('id', ids.slice(0, 4))
         .eq('status', 'approved')
 

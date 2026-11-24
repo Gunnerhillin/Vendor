@@ -47,16 +47,10 @@ export default function VendorDashboard() {
       }
 
       // Orders for this vendor
-      const { data: orderItems } = await supabase
-        .from("order_items")
-        .select("*, order:orders(id, status, created_at, total, customer_id, customer:profiles(full_name)), product:products(title)")
-        .eq("vendor_id", vendor.id)
-        .order("created_at", { ascending: false })
-        .limit(10)
-
+      const { data: orderItems } = await supabase.rpc('vendor_fulfillment_orders')
       if (orderItems) {
-        setTotalOrders(orderItems.length)
-        setRecentOrders(orderItems)
+        setTotalOrders(new Set(orderItems.map((item: any)=>item.order.id)).size)
+        setRecentOrders(orderItems.slice(0,10))
       }
 
       // Pending payout
@@ -78,7 +72,7 @@ export default function VendorDashboard() {
     { label: "Total Revenue", value: formatPrice(totalRevenue), change: vendorName ? "From all sales" : "No data yet", up: true, icon: DollarSign },
     { label: "Orders", value: String(totalOrders), change: totalOrders > 0 ? `${totalOrders} total` : "No orders yet", up: true, icon: ShoppingCart },
     { label: "Active Products", value: String(activeProducts), change: pendingProducts > 0 ? `${pendingProducts} pending` : "All approved", up: true, icon: Package },
-    { label: "Next Payout", value: formatPrice(nextPayout), change: nextPayout > 0 ? "Pending transfer" : "No payouts yet", up: nextPayout > 0, icon: TrendingUp },
+    { label: "Awaiting payout review", value: formatPrice(nextPayout), change: nextPayout > 0 ? "Pending transfer" : "No payouts yet", up: nextPayout > 0, icon: TrendingUp },
   ]
 
   if (loading) {
@@ -142,8 +136,8 @@ export default function VendorDashboard() {
                 {recentOrders.map((item) => (
                   <tr key={item.id} className="border-b border-warm-border last:border-0 hover:bg-warm-100/50">
                     <td className="px-6 py-4 text-sm font-medium">#{item.order?.id?.slice(0, 8)}</td>
-                    <td className="px-6 py-4 text-sm">{item.product?.title || "—"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-500">{item.order?.customer?.full_name || "—"}</td>
+                    <td className="px-6 py-4 text-sm">{item.product_title || "—"}</td>
+                    <td className="px-6 py-4 text-sm text-gray-500">{item.order?.shipping_name || "—"}</td>
                     <td className="px-6 py-4 text-sm font-medium">{formatPrice(item.unit_price * item.quantity)}</td>
                     <td className="px-6 py-4">
                       <span className={`badge ${

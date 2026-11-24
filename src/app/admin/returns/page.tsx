@@ -20,6 +20,7 @@ export default function AdminReturnsPage() {
   const [actionModal, setActionModal] = useState<any>(null)
   const [notes, setNotes] = useState("")
   const [submitting, setSubmitting] = useState(false)
+  const [notice, setNotice] = useState("")
 
   useEffect(() => {
     async function fetchReturns() {
@@ -32,29 +33,22 @@ export default function AdminReturnsPage() {
   }, [filter])
 
   const handleAction = async (returnId: string, status: string) => {
-    setSubmitting(true)
+    setSubmitting(true); setNotice('')
     try {
-      const res = await fetch('/api/returns', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          return_id: returnId,
-          status,
-          resolution_notes: notes,
-          admin_override: true,
-        }),
+      const financial = status === 'completed'
+      const res = await fetch(financial ? '/api/admin/finance' : '/api/returns', {
+        method: financial ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(financial ? {kind:'refund',targetId:returnId} : {return_id:returnId,status,resolution_notes:notes}),
       })
-      if (res.ok) {
-        setReturns(prev => prev.map(r =>
-          r.id === returnId ? { ...r, status, admin_override: true } : r
-        ))
-        setActionModal(null)
-        setNotes("")
-      }
-    } catch (err) {
-      console.error(err)
-    }
-    setSubmitting(false)
+      const data=await res.json()
+      if(!res.ok) throw new Error(data.error || 'Unable to update return')
+      if(financial) setNotice(data.status==='succeeded' ? 'Stripe confirmed the refund.' : `Refund is ${data.status || 'pending'}. It is not yet confirmed; retry this action to check it.`)
+      const refreshed=await fetch('/api/returns?role=admin')
+      const current=await refreshed.json()
+      if(current.returns) setReturns(current.returns)
+      setActionModal(null);setNotes('')
+    } catch(e) {setNotice(e instanceof Error ? e.message : 'Unable to update return')}
+    finally {setSubmitting(false)}
   }
 
   const counts = {
@@ -74,6 +68,7 @@ export default function AdminReturnsPage() {
 
   return (
     <div>
+      {notice && <p role="status" className="mb-4 text-sm">{notice}</p>}
       <h1 className="font-display text-2xl font-semibold mb-2 flex items-center gap-2">
         <RotateCcw size={24} /> Returns Management
       </h1>
@@ -140,7 +135,7 @@ export default function AdminReturnsPage() {
                     </div>
                     <div>
                       <span className="text-gray-400">Amount:</span>{" "}
-                      <span className="font-medium text-gray-700">{formatPrice((ret.order_item?.unit_price || 0) * (ret.order_item?.quantity || 1))}</span>
+                      <span className="font-medium text-gray-700">{formatPrice((ret.order_item?.unit_price || 0) * (ret.order_item?.quantity || 1) + Number(ret.order_item?.tax_cents || 0)/100)}</span>
                     </div>
                     <div>
                       <span className="text-gray-400">Requested:</span>{" "}
@@ -181,10 +176,10 @@ export default function AdminReturnsPage() {
                     )}
                     {ret.status === 'approved' && (
                       <button
-                        onClick={() => setActionModal({ ...ret, action: 'completed' })}
+                        onClick={() => setActionModal({ ...ret, action: ret.received_at ? 'completed' : 'received' })}
                         className="text-xs font-semibold text-blue-600 hover:bg-blue-50 px-3 py-1.5 rounded-lg transition-colors"
                       >
-                        <Check size={14} className="inline mr-1" /> Complete & Refund
+                        <Check size={14} className="inline mr-1" /> {ret.received_at ? 'Issue / check refund' : 'Record received items'}
                       </button>
                     )}
                   </div>
@@ -202,7 +197,7 @@ export default function AdminReturnsPage() {
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display text-lg font-semibold flex items-center gap-2">
                 <Shield size={18} className="text-purple-600" />
-                {actionModal.action === 'approved' ? 'Approve Return' : actionModal.action === 'denied' ? 'Deny Return' : 'Complete Return & Refund'}
+                {actionModal.action === 'approved' ? 'Approve Return' : actionModal.action === 'denied' ? 'Deny Return' : actionModal.action === 'received' ? 'Record physical receipt' : 'Issue or check refund'}
               </h3>
               <button onClick={() => { setActionModal(null); setNotes(""); }} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
@@ -216,6 +211,7 @@ export default function AdminReturnsPage() {
                 <p><span className="font-medium">Reason:</span> {actionModal.reason}</p>
               </div>
 
+              {actionModal.action === 'completed' && <p className="font-semibold">Refund total: {formatPrice(Number(actionModal.order_item?.unit_price || 0) * Number(actionModal.order_item?.quantity || 0) + Number(actionModal.order_item?.tax_cents || 0)/100)}</p>}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Resolution Notes</label>
                 <textarea
@@ -228,7 +224,7 @@ export default function AdminReturnsPage() {
 
               {actionModal.action === 'completed' && (
                 <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-700">
-                  This will mark the item as refunded. Process the actual refund through Stripe separately.
+                  This refunds all units on this return, including their allocated tax. If the brand has already been paid, its share must be recovered first. The return is completed only after Stripe confirms success. Retrying checks the same operation.
                 </div>
               )}
 
@@ -248,7 +244,7 @@ export default function AdminReturnsPage() {
                       : 'btn-primary'
                   }`}
                 >
-                  {submitting ? 'Processing...' : `Confirm ${actionModal.action === 'approved' ? 'Approval' : actionModal.action === 'denied' ? 'Denial' : 'Refund'}`}
+                  {submitting ? 'Processing...' : `Confirm ${actionModal.action === 'approved' ? 'Approval' : actionModal.action === 'denied' ? 'Denial' : actionModal.action === 'received' ? 'Receipt' : 'Refund'}`}
                 </button>
               </div>
             </div>

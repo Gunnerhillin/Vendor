@@ -63,7 +63,7 @@ export default function AdminDealsPage() {
       <h1 className="font-display text-2xl font-semibold mb-2 flex items-center gap-2">
         <Zap size={24} className="text-amber-500" /> Flash Deals
       </h1>
-      <p className="text-sm text-gray-400 mb-6">Approve or reject vendor flash deal requests. Approved deals update product pricing automatically.</p>
+      <p className="text-sm text-gray-400 mb-6">Approve or reject vendor flash deal requests. Approved prices apply only during the scheduled dates. Product edits cancel pending or approved deals.</p>
 
       {/* Filter tabs */}
       <div className="flex gap-2 mb-6 flex-wrap">
@@ -91,7 +91,7 @@ export default function AdminDealsPage() {
         <div className="space-y-3">
           {deals.map((deal) => {
             const now = new Date()
-            const isLive = deal.status === 'approved' && new Date(deal.starts_at) <= now && new Date(deal.ends_at) >= now
+            const isLive = deal.status === 'approved' && new Date(deal.starts_at) <= now && new Date(deal.ends_at) > now
 
             return (
               <div key={deal.id} className="card p-5">
@@ -106,7 +106,7 @@ export default function AdminDealsPage() {
                     <div className="flex items-center gap-2 mb-1">
                       <p className="text-sm font-semibold">{deal.product?.title || "Product"}</p>
                       <span className={`badge capitalize text-[10px] ${statusColors[deal.status] || ""}`}>
-                        {deal.status}
+                        {deal.status === 'approved' && new Date(deal.ends_at) <= now ? 'expired' : deal.status === 'approved' && new Date(deal.starts_at) > now ? 'scheduled' : deal.status}
                       </span>
                       {isLive && (
                         <span className="badge text-[10px] bg-green-500 text-white animate-pulse">LIVE</span>

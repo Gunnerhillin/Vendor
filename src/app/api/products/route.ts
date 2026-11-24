@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerSupabaseClient()
 
     let query = supabase
-      .from('products')
+      .from('catalog_products')
       .select(
         `
       id,
@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       rating_count,
       created_at,
       updated_at,
-      vendor:vendors(id, business_name, slug, logo_url),
+      vendor:vendor_directory(id, business_name, slug, logo_url),
       category:categories(id, name, slug, icon),
       images:product_images(id, url, alt, sort_order),
       variants:product_variants(id, name, type, value, price_adjustment, inventory_count, sort_order)
@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
     // Filter by vendor
     if (vendor) {
       const { data: vendorData } = await supabase
-        .from('vendors')
+        .from('vendor_directory')
         .select('id')
         .eq('slug', vendor)
         .single()

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Analytics } from '@vercel/analytics/react'
 import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
+import CartHydration from '@/components/shared/CartHydration'
 import { SITE_NAME, SITE_DESCRIPTION } from '@/lib/constants'
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://cutievalley.com'
@@ -56,6 +57,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen">
+        <CartHydration />
         {children}
         <Analytics />
         <SpeedInsights />
