@@ -34,7 +34,7 @@ await db.exec(readFileSync(new URL('supabase/migrations/010_product_workflow.sql
 await db.exec('GRANT USAGE ON SCHEMA public,auth TO service_role; GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;')
 
 
-for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql','014_notification_delivery.sql','015_financial_operations.sql','016_launch_configuration.sql','017_scheduled_deals.sql','018_checkout_recovery.sql','019_contact_and_leads.sql','020_verified_reviews.sql','021_order_policy_snapshots.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
+for (const file of ['011_private_data_and_fulfillment.sql','012_reserved_checkout.sql','013_atomic_returns.sql','014_notification_delivery.sql','015_financial_operations.sql','016_launch_configuration.sql','017_scheduled_deals.sql','018_checkout_recovery.sql','019_contact_and_leads.sql','020_verified_reviews.sql','021_order_policy_snapshots.sql','022_background_recovery.sql','023_profile_visibility_and_commission.sql']) await db.exec(readFileSync(new URL(`supabase/migrations/${file}`,root),'utf8'));
 
 const buyer='00000000-0000-0000-0000-000000000001'
 const seller='00000000-0000-0000-0000-000000000002'
@@ -156,6 +156,8 @@ await denied(()=>db.query(`SELECT confirm_vendor_terms($1,20)`,[vendor]))
 await db.exec(`SELECT set_config('request.jwt.claim.sub','${buyer}',false)`)
 await denied(()=>db.query(`SELECT save_launch_configuration('{"checkout_mode":"live","return_window_days":30,"policies_confirmed":false}')`))
 await denied(()=>db.query(`SELECT confirm_vendor_terms($1,100)`,[vendor]))
+await denied(()=>db.query(`SELECT confirm_vendor_terms($1,99.999)`,[vendor]))
+await denied(()=>db.query(`SELECT confirm_vendor_terms($1,1.234)`,[vendor]))
 await db.query(`SELECT save_launch_configuration($1)`,[JSON.stringify({checkout_mode:'test',return_window_days:14,policies_confirmed:true,company_name:'Test Company',support_email:'support@example.invalid',return_condition:'Unused items in original packaging with tags.'})])
 await equal(`SELECT (value->>'window_days')::int FROM site_settings WHERE key='return_policy'`,14)
 await db.query(`SELECT confirm_vendor_terms($1,20)`,[vendor])
@@ -221,6 +223,7 @@ await equal(`SELECT status FROM deals WHERE id=$1`,'rejected',[deal.id])
 await equal(`SELECT effective_product_price($1)::text`,'16.00',[productTwo])
 
 await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub','',false); SET ROLE anon`)
+await equal(`SELECT count(*)::int FROM public_profiles`,0)
 await denied(()=>db.query(`INSERT INTO newsletter_subscribers(email) VALUES('bypass@example.invalid')`))
 await denied(()=>db.query(`SELECT capture_public_message('contact','person@example.invalid','Person','other','Hello support team')`))
 await denied(()=>db.query(`SELECT save_verified_review($1,$2,5,'Forged',false)`,[buyer,product]))
@@ -235,6 +238,9 @@ await denied(()=>db.query(`SELECT capture_public_message('newsletter','bad email
 await denied(()=>db.query(`SELECT save_verified_review($1,$2,5,'Not my purchase',false)`,[sellerTwo,product]))
 await db.query(`SELECT save_verified_review($1,$2,4,'Verified buyer review',false)`,[buyer,product])
 await equal(`SELECT rating_count FROM products WHERE id=$1`,1,[product])
+await db.exec('RESET ROLE; SET ROLE anon')
+await equal(`SELECT count(*)::int FROM public_profiles`,1)
+await db.exec('RESET ROLE; SET ROLE service_role')
 await equal(`SELECT rating_avg::text FROM products WHERE id=$1`,'4.00',[product])
 await denied(()=>db.query(`SELECT save_verified_review($1,$2,5,'Duplicate',false)`,[buyer,product]))
 await db.query(`SELECT save_verified_review($1,$2,NULL,NULL,true)`,[buyer,product])
@@ -247,5 +253,17 @@ await db.exec(`RESET ROLE; SELECT set_config('request.jwt.claim.sub','',false); 
 await equal(`SELECT (policy_snapshot->>'return_window_days')::int FROM orders WHERE id=$1`,14,[mixed.order.id])
 await db.exec(`RESET ROLE; UPDATE site_settings SET value=jsonb_set(value,'{return_window_days}','7') WHERE key='launch_config'`)
 await equal(`SELECT (policy_snapshot->>'return_window_days')::int FROM orders WHERE id=$1`,14,[mixed.order.id])
+await db.exec(`RESET ROLE; SET ROLE anon`)
+await denied(()=>db.query('SELECT * FROM claim_checkout_recovery(3)'))
+await db.exec(`RESET ROLE; SET ROLE authenticated`)
+await denied(()=>db.query('SELECT * FROM claim_checkout_recovery(3)'))
+await db.exec(`RESET ROLE; UPDATE orders SET created_at=now()-interval '1 hour' WHERE reservation_state='reserved'; SET ROLE service_role`)
+const batch=(await db.query('SELECT * FROM claim_checkout_recovery(100)')).rows
+assert.ok(batch.length>0 && batch.length<=3);checks++
+const again=(await db.query('SELECT * FROM claim_checkout_recovery(3)')).rows
+assert.ok(again.every(o=>!batch.some(b=>b.id===o.id)));checks++
+for(const o of batch) await equal(`SELECT reservation_state FROM orders WHERE id=$1`,'reserved',[o.id])
+await db.exec(`RESET ROLE; UPDATE orders SET recovery_checked_at=now()-interval '31 minutes' WHERE reservation_state='reserved'; SET ROLE service_role`)
+assert.ok((await db.query('SELECT * FROM claim_checkout_recovery(3)')).rows.length>0);checks++
 console.log(`${checks} checkout and fulfillment checks passed`)
 await db.close()

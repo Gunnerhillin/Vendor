@@ -2,14 +2,14 @@
 
 Updated: November 23, 2026 (America/Denver).
 
-## Latest checkpoint â€” November 23, 2026
-Development branch now includes refund/transfer operations (015), launch configuration (016), vendor dashboard repair and dynamic confirmed return policy. None of migrations 011â€“016 have been deployed. Production remains guide release 32782f2. Live financial operations remain disabled.
+## Latest checkpoint — November 23, 2026
+Development contains migrations 011–023. None have been deployed. Production main remains 32782f2 (partner guide). Prior development checkpoint 9aca798 is pushed; subsequent worker/readiness/privacy changes are being verified and checkpointed. Live switches were NOT enabled.
 
-Validation: production build passed (68 generated pages); 65 checkout/fulfillment/returns/finance/config/multi-brand database checks, 19 financial provider-mock checks, 10 notification checks, 29 approval, 31 legacy payment, 31 product workflow, 9 product API, 6 webhook signature and 15 webhook routing checks (215 total across current suites). These are local checks, not Stripe end-to-end tests.
+Latest validation: full production build passed (69 generated pages) with worker/readiness UI; subsequent shipping-copy edits pass type checking. Database suite now 109, operations/readiness 25, checkout provider recovery 13, financial provider mocks 19, notifications 10, approval 29, legacy payments 31, products 31, product API 9, webhook signature 6 and routing 15. Run all suites and a final build before release. These are local checks, not Stripe end-to-end tests.
 
-New launch UI lets admins enter company/support/return terms, select closed/test/live access, and explicitly confirm each approved brand's agreed commission. No business values were invented or entered into production. Public return policy reads confirmed values and shows a prelaunch message otherwise. Vendor dashboard counts distinct paid orders and no longer joins inaccessible customer profiles.
+Implemented on development: hosted checkout/reservations/recovery, private data, multi-brand fulfillment, returns/receipt/refunds, admin-reviewed transfers/reversals, confirmed business terms and order policy snapshots, scheduled deals, contact inbox/newsletter capture, verified reviews, notification dispatcher, recovery inbox and configuration-presence checks. Partner guide is independently live at https://www.cutievalley.com/guide/index.html.
 
-Next priorities: complete external refund/dispute reconciliation and failed-operation recovery tooling; fix/disable discounts; recover orphan checkout reservations; actual two-brand sandbox payment/refund/transfer/email testing; staging database compatibility and view relationship checks; coordinated deployment. Continue from these priorities instead of rebuilding completed work.
+Next required: staging migration/PostgREST compatibility; actual two-brand Stripe sandbox checkout/refund/transfer/reversal/email tests; verify tax/webhook/sender configuration; financial failed-operation and external-refund/dispute reconciliation; configure and observe the background schedule; coordinated deployment with checkout closed. Business details and brand agreements remain unconfirmed. Do not treat configuration-present checks as integration success.
 
 ## Authorization and boundaries
 User requested implementation of all launch-flow steps and durable progress notes. Earlier main deployment is c7ce10e. Preserve Next.js 14 / React 18 / Supabase / Stripe. Do not expose or commit credentials. No real charges, refunds, transfers, or merchant policy promises during development. Stripe browser access was blocked; do not bypass that restriction. User can complete account configuration when needed.
@@ -107,3 +107,11 @@ Read this file, git status/log, and latest tests. Continue unfinished items; do 
 - Admin launch recovery inbox lists reserved sessions, unresolved financial operations and queued/failed notifications. Financial retries still route through the amount-review screens; no unsafe force-success or release controls.
 - New checks: database suite 99 (was 65), plus 13 Checkout interrupted-save/provider recovery checks. Existing financial 19, notification 10, webhook routing 15 and product API 9 pass. All new work remains off production pending coordinated migration/API integration tests.
 - Required staging smoke test: PostgREST relationship inference for catalog_products joins to images, variants and vendor_directory. Local SQL tests verify catalog visibility and prices, but do not run PostgREST itself.
+
+## Background recovery and security checkpoint — November 23
+- Added protected /api/cron/operations, disabled unless ENABLE_BACKGROUND_OPERATIONS=true and a non-placeholder CRON_SECRET of at least 32 characters is configured. Constant-time hashed bearer comparison; no financial transfers/refunds initiated by the worker. No schedule or credentials have been installed.
+- 022 claims small reserved-checkout batches with row locks and a 30-minute lease, skips new checkouts for five minutes, rotates previously attempted records behind untouched records. Missing provider evidence never releases inventory. Email queue claims remain independently fenced/idempotent. Provider failures return a failed health response without exposing underlying secrets/errors.
+- Admin Service setup checks configuration presence only, exposes booleans/payment mode, never credentials. It explicitly requires real integration tests. 25 authorization/redaction/failure-isolation checks pass.
+- 023 restricts public profile discovery to visible-review authors or authorized own/admin/return workflows. Commission confirmation now rejects more than two percentage decimal places, avoiding rounding 99.999% to a full 100% commission. Database suite passes 109 checks.
+- About/local/brand pages now match shipping-included launch flow; unsupported checkout pickup badges/promises removed. No unconfirmed business identity details were invented.
+- Read docs/BACKGROUND_OPERATIONS.md before scheduling. Scheduler configuration is intentionally not activated before staging validation; daily-only schedules are insufficient for prompt order notification and recovery.

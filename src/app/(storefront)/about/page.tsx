@@ -113,7 +113,7 @@ export default function AboutPage() {
                     <MapPin size={20} className="text-emerald-600" />
                   </div>
                   <div>
-                    <h4 className="font-semibold text-sm mb-1">Local Pickup</h4>
+                    <h4 className="font-semibold text-sm mb-1">Shipping Included</h4>
                     <p className="text-xs text-gray-500">Skip shipping — pick up from local vendors in St. George</p>
                   </div>
                 </div>
@@ -148,7 +148,7 @@ export default function AboutPage() {
                 more customers.
               </p>
               <p className="text-gray-600 leading-relaxed mb-6">
-                Local vendors get a special &ldquo;Shop Local&rdquo; badge, can offer free local pickup, and are
+                Local vendors get a special &ldquo;Shop Local&rdquo; badge and are
                 featured on our dedicated local marketplace page.
               </p>
               <Link href="/local" className="inline-flex items-center gap-2 text-emerald-600 font-semibold hover:underline">

@@ -104,8 +104,8 @@ export default function ShopLocalPage() {
             },
             {
               icon: MapPin,
-              title: 'Free Local Pickup',
-              desc: 'Many of our local vendors offer free pickup right here in St. George. Skip shipping, grab it today.',
+              title: 'Shipping Included',
+              desc: 'Each brand includes shipping in its product prices. Items from different brands may arrive separately.',
             },
             {
               icon: Users,

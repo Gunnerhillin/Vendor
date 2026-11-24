@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import OperationsInbox from '@/components/admin/OperationsInbox'
+import ServiceReadiness from '@/components/admin/ServiceReadiness'
 import LaunchConfiguration from '@/components/admin/LaunchConfiguration'
 import { createClient } from '@/lib/supabase/client'
 
@@ -59,6 +60,7 @@ export default function LaunchSetup() {
       </select>
     </section>
     <LaunchConfiguration />
+    <ServiceReadiness />
     <OperationsInbox />
     <p role="status" className="text-sm">{notice}</p>
   </div>
